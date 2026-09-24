@@ -1,7 +1,12 @@
-name: PluginTemplate
+name: BiteEntities
 version: 1.0
-main: gg.bitesize.plugin.Main
-api-version: 26.2
-description: bitesize plugin template base
+main: gg.bitesize.plugin.Entities
+api-version: 26.3
+description: bitesize entities plugin
 author: bitesize
 website: https://bitesize.gg
+
+permissions:
+  biteentities.admin:
+    description: Access to all BiteEntities commands
+    default: op

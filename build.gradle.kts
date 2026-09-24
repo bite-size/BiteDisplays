@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("26.2.build.+")
+    paperweight.paperDevBundle("26.3.build.+")
 }
 
 tasks {
@@ -37,7 +37,7 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("26.2")
+        minecraftVersion("26.3")
     }
 }
 
@@ -46,5 +46,5 @@ kotlin {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("EntitiesKt")
 }
