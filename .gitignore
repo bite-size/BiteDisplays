@@ -42,6 +42,15 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### Kotlin ###
+.kotlin/
 
-### Run ###
+### Local test server ###
 /run/
+/run-purpur/
+/run-spigot/
+/.servers/
+
+### Local-only: bot tests and Claude notes ###
+/testing/
+/CLAUDE.md

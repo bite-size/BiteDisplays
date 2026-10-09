@@ -1,12 +1,44 @@
-name: BiteEntities
-version: 1.0
-main: gg.bitesize.plugin.Entities
-api-version: 26.3
-description: bitesize entities plugin
+name: BiteDisplays
+version: '${version}'
+main: gg.bitesize.displays.BiteDisplays
+api-version: '26.3'
+description: Create NPCs and text, item, and block displays, all in-game.
 author: bitesize
 website: https://bitesize.gg
 
+libraries:
+  - org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}
+
 permissions:
-  biteentities.admin:
-    description: Access to all BiteEntities commands
+  bitedisplays.*:
+    description: Every BiteDisplays permission.
+    default: op
+    children:
+      bitedisplays.use: true
+      bitedisplays.npc: true
+      bitedisplays.item: true
+      bitedisplays.block: true
+      bitedisplays.text: true
+      bitedisplays.manage: true
+      bitedisplays.admin: true
+  bitedisplays.use:
+    description: Use /bitedisplays and see the help menu.
+    default: op
+  bitedisplays.npc:
+    description: Create and edit NPCs.
+    default: op
+  bitedisplays.item:
+    description: Create and edit item displays.
+    default: op
+  bitedisplays.block:
+    description: Create and edit block displays.
+    default: op
+  bitedisplays.text:
+    description: Create and edit text displays.
+    default: op
+  bitedisplays.manage:
+    description: Select, move, remove, inspect, and list entities.
+    default: op
+  bitedisplays.admin:
+    description: Save entities and reload the configuration.
     default: op
