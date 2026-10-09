@@ -49,8 +49,8 @@ tasks {
         // Intermediate jar: pluginJar adds the Paper classes to it
         archiveClassifier.set("shadow")
         destinationDirectory.set(layout.buildDirectory.dir("shadow"))
-        relocate("net.kyori", "gg.bitesize.entities.libs.kyori")
-        relocate("org.bstats", "gg.bitesize.entities.libs.bstats")
+        relocate("net.kyori", "gg.bitesize.displays.libs.kyori")
+        relocate("org.bstats", "gg.bitesize.displays.libs.bstats")
         mergeServiceFiles()
         exclude("META-INF/maven/**", "META-INF/versions/*/module-info.class", "module-info.class", "org/jspecify/**")
     }

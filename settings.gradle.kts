@@ -1,3 +1,3 @@
 
-rootProject.name = "BiteEntities"
+rootProject.name = "BiteDisplays"
 

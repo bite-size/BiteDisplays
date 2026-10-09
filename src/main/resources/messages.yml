@@ -1,8 +1,8 @@
-############ BiteEntities ###########
+############ BiteDisplays ###########
 #####    Created by: bitesize    ####
 #####   https://www.bitesize.gg  ####
 #####################################
-prefix: '<#FF0368>[BiteEntities] '
+prefix: '<#FF0368>[BiteDisplays] '
 error-prefix: '<#F7567C>!! '
 # Variables:
 # - <label> = command label.
@@ -58,7 +58,7 @@ errors:
   no-selection: '<#F7567C>Nothing selected. Look at an entity and use <#4ECDC4>/<label> select <#F7567C>first.'
   wrong-type: '<#F7567C>This command needs a selected <#4ECDC4><type><#F7567C>.'
   nothing-in-sight: '<#F7567C>Look at an entity within <#4ECDC4><range> <#F7567C>blocks.'
-  not-managed: "<#F7567C>That entity isn't managed by BiteEntities."
+  not-managed: "<#F7567C>That entity isn't managed by BiteDisplays."
   no-item: '<#F7567C>Hold an item in your main hand first.'
   no-block: '<#F7567C>Hold a block in your main hand first.'
   spawn-failed: "<#F7567C>Couldn't spawn the <type> here."
@@ -107,7 +107,7 @@ messages:
   line-edited: '<#4ECDC4>Edited line <#F7FFF7><line><#4ECDC4>.'
 
 help:
-  header: '<#4ECDC4>--- BiteEntities Help ---'
+  header: '<#4ECDC4>--- BiteDisplays Help ---'
   npc: '<gray>- /<label> npc <dark_gray>(NPC commands)'
   item: '<gray>- /<label> item <dark_gray>(item display commands)'
   block: '<gray>- /<label> block <dark_gray>(block display commands)'
