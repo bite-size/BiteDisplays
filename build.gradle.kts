@@ -133,7 +133,14 @@ val buildSpigot by tasks.registering(Exec::class) {
 
 tasks.runServer {
     minecraftVersion(testServerVersion)
-    pluginJars.setFrom(pluginJar.flatMap { it.archiveFile })
+}
+
+// run-paper adds the shadowJar output to runServer after evaluation, so override it afterwards.
+// Otherwise Paper also sees the intermediate shadow jar (no Paper classes) and may load that one.
+afterEvaluate {
+    tasks.runServer {
+        pluginJars.setFrom(pluginJar.flatMap { it.archiveFile })
+    }
 }
 
 fun RunServer.testServer(name: String, jar: File, directory: String) {
