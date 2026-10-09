@@ -1,0 +1,31 @@
+############ BiteEntities ###########
+#####    Created by: bitesize    ####
+#####   https://www.bitesize.gg  ####
+#####################################
+version: 1.0.0
+
+# Turn the commands for each entity type on or off. Entities already placed stay in the world.
+features:
+  npc: true
+  item: true     # item displays
+  block: true    # block displays
+  text: true     # text displays
+
+selection:
+  # How far away /be select reaches, in blocks
+  range: 5.0
+
+# Names, descriptions, and text lines support MiniMessage (<#FF0368>, <gradient:#FF0368:#4ECDC4>, <bold>).
+# Run /be reload after editing.
+text:
+  # The first line of a new text display when you don't give one
+  default-line: "Text Display"
+  # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity)
+  default-background: "#64000000"
+
+animations:
+  # Item displays with /be item bouncing true
+  bounce:
+    interval: 4    # ticks between steps, lower is smoother
+    height: 0.12   # blocks above and below the resting point
+    speed: 0.15    # higher bounces faster
