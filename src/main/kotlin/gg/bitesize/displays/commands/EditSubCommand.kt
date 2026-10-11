@@ -4,6 +4,7 @@ import gg.bitesize.displays.managers.ConfigManager
 import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.models.BiteEntity
 import gg.bitesize.displays.models.BiteType
+import gg.bitesize.displays.storage.EntityDatabase
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -44,6 +45,8 @@ abstract class EditSubCommand<T : BiteEntity>(name: String, vararg types: BiteTy
 
         @Suppress("UNCHECKED_CAST")
         edit(player, entity as T, label, args)
+        // Some edits (an NPC's click command or sound) don't respawn anything, so the save is flagged here too
+        EntityDatabase.markDirty()
     }
 
     /** [args] excludes the action. */

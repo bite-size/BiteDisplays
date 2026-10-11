@@ -4,39 +4,111 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import gg.bitesize.displays.BiteDisplays.Companion.INSTANCE
+import gg.bitesize.displays.managers.ConfigManager
 import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.models.*
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.inventory.ItemStack
+import org.bukkit.scheduler.BukkitTask
 import org.bukkit.util.io.BukkitObjectInputStream
 import org.bukkit.util.io.BukkitObjectOutputStream
 import org.joml.Vector3f
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.Base64
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.logging.Level
 
 /**
  * Flat-file JSON persistence for all tracked BiteDisplays.
  * Saves to plugins/BiteDisplays/entities.json.
+ *
+ * Entities and items can only be read on the main thread, so a save snapshots them there, then builds the JSON
+ * and writes the file on one background thread (so saves never overlap). The file is written next to the old one
+ * and moved over it, so a crash mid-save can't leave it half-written. Autosave only saves after a change.
  */
 object EntityDatabase {
 
     private lateinit var file: File
     private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
 
+    private lateinit var writer: ExecutorService
+    private var autosave: BukkitTask? = null
+
+    /** Whether anything changed since the last save. Set from the main thread, by EntityManager and commands. */
+    @Volatile
+    private var dirty = false
+
     fun initialize() {
         val dataFolder = INSTANCE.dataFolder
         if (!dataFolder.exists()) dataFolder.mkdirs()
         file = File(dataFolder, "entities.json")
         if (!file.exists()) file.createNewFile()
+
+        writer = Executors.newSingleThreadExecutor { Thread(it, "BiteDisplays Save").apply { isDaemon = true } }
     }
 
-    fun save() {
-        val serialized = EntityManager.getAll().mapNotNull { toSerialized(it) }
-        file.writeText(gson.toJson(serialized))
+    fun markDirty() {
+        dirty = true
+    }
+
+    /** Saves off the main thread. The future completes on the save thread. */
+    fun saveAsync(): CompletableFuture<Int> {
+        dirty = false
+        val snapshot = snapshot()
+        return CompletableFuture.supplyAsync({
+            write(gson.toJson(snapshot))
+            snapshot.size
+        }, writer).whenComplete { _, error ->
+            if (error != null) {
+                dirty = true
+                INSTANCE.logger.log(Level.SEVERE, "Couldn't save entities.json", error)
+            }
+        }
+    }
+
+    /** On shutdown: lets a save that's already running finish, then saves on this thread. */
+    fun saveNow() {
+        writer.shutdown()
+        writer.awaitTermination(10, TimeUnit.SECONDS)
+        dirty = false
+        write(gson.toJson(snapshot()))
+    }
+
+    /** Saves changed entities every `storage.autosave` minutes. Restarted on reload. */
+    fun startAutosave() {
+        stopAutosave()
+        val interval = ConfigManager.settings.autosaveTicks
+        if (interval <= 0) return
+        autosave = INSTANCE.server.scheduler.runTaskTimer(INSTANCE, Runnable {
+            if (dirty) saveAsync()
+        }, interval, interval)
+    }
+
+    fun stopAutosave() {
+        autosave?.cancel()
+        autosave = null
+    }
+
+    private fun snapshot(): List<SerializedEntity> = EntityManager.getAll().mapNotNull { toSerialized(it) }
+
+    private fun write(json: String) {
+        val temp = File(file.parentFile, "${file.name}.tmp")
+        temp.writeText(json)
+        try {
+            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 
     fun load() {
@@ -53,7 +125,7 @@ object EntityDatabase {
             val number = data.number.takeIf { it > 0 }
                 ?: (highest.getValue(data.type) + 1).also { highest[data.type] = it }
             val entity = fromSerialized(data, number) ?: continue
-            EntityManager.spawn(entity)
+            EntityManager.restore(entity)
         }
     }
 
@@ -108,7 +180,7 @@ object EntityDatabase {
                 bouncing = entity.bouncing
             )
             is BiteText -> base.copy(
-                lines = entity.lines,
+                lines = entity.lines.toList(),
                 backgroundColor = entity.backgroundColor,
                 scaleX = entity.scale.x, scaleY = entity.scale.y, scaleZ = entity.scale.z,
                 displayCommand = entity.command?.command,

@@ -11,8 +11,11 @@ import org.bukkit.event.world.ChunkUnloadEvent
  *
  * All BiteDisplays are spawned with isPersistent = false, meaning Minecraft
  * won't save them. We handle persistence ourselves:
- *   - On chunk unload: drop the Bukkit entity handle (MC already despawns it).
+ *   - On chunk unload: remove the Bukkit entity and its companions, and drop the handles.
  *   - On chunk load: respawn any BiteDisplays whose locations fall in this chunk.
+ *
+ * Chunk events are the most frequent on a server, so each one is a single lookup in
+ * EntityManager's chunk index, and chunks without our entities cost nothing more.
  */
 object WorldListener : Listener {
 
@@ -20,12 +23,7 @@ object WorldListener : Listener {
     fun onChunkLoad(event: ChunkLoadEvent) {
         val chunk = event.chunk
 
-        for (entity in EntityManager.getAll()) {
-            val loc = entity.location
-            // Check if this entity belongs to the loading chunk
-            if (loc.world?.uid != chunk.world.uid) continue
-            if (loc.blockX shr 4 != chunk.x || loc.blockZ shr 4 != chunk.z) continue
-
+        for (entity in EntityManager.inChunk(chunk.world, chunk.x, chunk.z)) {
             // If the Bukkit handle is gone or dead, respawn it
             val bukkit = EntityManager.getBukkitEntity(entity.id)
             if (bukkit == null || bukkit.isDead) {
@@ -38,14 +36,10 @@ object WorldListener : Listener {
     fun onChunkUnload(event: ChunkUnloadEvent) {
         val chunk = event.chunk
 
-        for (entity in EntityManager.getAll()) {
-            val loc = entity.location
-            if (loc.world?.uid != chunk.world.uid) continue
-            if (loc.blockX shr 4 != chunk.x || loc.blockZ shr 4 != chunk.z) continue
-
-            // Drop the Bukkit handle — MC is despawning the entity with the chunk.
-            // The BiteEntity data stays in EntityManager for respawn on next load.
-            EntityManager.removeBukkitEntity(entity.id)
+        // Removed with the chunk, not left for the server to discard later (see unloadBukkitEntity).
+        // The BiteEntity data stays in EntityManager for respawn on next load.
+        for (entity in EntityManager.inChunk(chunk.world, chunk.x, chunk.z)) {
+            EntityManager.unloadBukkitEntity(entity.id)
         }
     }
 }

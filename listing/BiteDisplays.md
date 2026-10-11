@@ -36,7 +36,7 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 - NPCs that can't be hurt, even by players in creative mode.
 - Bouncing item displays, glowing in any color, and text that turns to face players.
 - Turn NPCs, item, block, or text displays on or off individually.
-- Lightweight: entities are vanilla mannequins and displays, saved to one file and respawned as their chunks load.
+- Lightweight: entities are vanilla mannequins and displays, saved to one file off the main thread and spawned only as their chunks load.
 
 ## ▸ Creating
 
@@ -79,7 +79,7 @@ Leave out a `[value]` to remove it. In commands, `@p` is the player who clicked.
 | `/bd setlocation <x> <y> <z>` | Move it to exact coordinates |
 | `/bd remove` | Remove your selection |
 | `/bd info` | Show your selection's details |
-| `/bd list [type]` | List every entity with a **[SELECT]** button, or one type |
+| `/bd list [type] [page]` | List every entity with a **[SELECT]** button, or one type, 10 to a page |
 | `/bd save` / `/bd reload` | Save entities / reload config & messages (`bitedisplays.admin`) |
 | `bitedisplays.npc`, `.text`, `.item`, `.block` | Each entity type's commands |
 | `bitedisplays.manage` | Select, move, remove, inspect, and list |
@@ -93,7 +93,7 @@ All permissions default to op. *Every command also works as `/bitedisplays`.*
 - **Selection:** How far away `/bd select` reaches.
 - **Clicks:** An optional cooldown between clicks, off by default.
 - **Text:** The default background and billboard of new text displays.
-- **Animations:** The height, speed, and smoothness of bouncing items.
+- **Animations:** The height and speed of bouncing items, how far away displays render, and how often entities autosave.
 
 <details>
 <summary><b>config.yml</b></summary>
@@ -115,11 +115,16 @@ text:
   default-background: "#40000000"
   default-billboard: true
 
+displays:
+  view-range: 1.0
+
 animations:
   bounce:
-    interval: 4
+    period: 160
     height: 0.12
-    speed: 0.15
+
+storage:
+  autosave: 5   # minutes
 ```
 
 </details>

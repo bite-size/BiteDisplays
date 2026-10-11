@@ -34,7 +34,7 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 [*]NPCs that can't be hurt, even by players in creative mode.
 [*]Bouncing item displays, glowing in any color, and text that turns to face players.
 [*]Turn NPCs, item, block, or text displays on or off individually.
-[*]Lightweight: entities are vanilla mannequins and displays, saved to one file and respawned as their chunks load.
+[*]Lightweight: entities are vanilla mannequins and displays, saved to one file off the main thread and spawned only as their chunks load.
 [/LIST]
 
 [SIZE=5][B][COLOR=#FF0368]▸ Creating[/COLOR][/B][/SIZE]
@@ -75,7 +75,7 @@ Leave out a [value] to remove it. In commands, @p is the player who clicked. /bd
 [*][B][COLOR=#4ECDC4]/bd setlocation <x> <y> <z>[/COLOR][/B] - Move it to exact coordinates [I](bitedisplays.manage)[/I]
 [*][B][COLOR=#4ECDC4]/bd remove[/COLOR][/B] - Remove your selection [I](bitedisplays.manage)[/I]
 [*][B][COLOR=#4ECDC4]/bd info[/COLOR][/B] - Show your selection's details [I](bitedisplays.manage)[/I]
-[*][B][COLOR=#4ECDC4]/bd list [type][/COLOR][/B] - List every entity with a [SELECT] button, or one type [I](bitedisplays.manage)[/I]
+[*][B][COLOR=#4ECDC4]/bd list [type] [page][/COLOR][/B] - List every entity with a [SELECT] button, or one type, 10 to a page [I](bitedisplays.manage)[/I]
 [*][B][COLOR=#4ECDC4]/bd save[/COLOR][/B] / [B][COLOR=#4ECDC4]/bd reload[/COLOR][/B] - Save entities / reload config & messages [I](bitedisplays.admin)[/I]
 [*][B]bitedisplays.npc, .text, .item, .block[/B] - Each entity type's commands.
 [*][B]bitedisplays.*[/B] - Every BiteDisplays permission.
@@ -89,7 +89,7 @@ All permissions default to op. [I]Every command also works as /bitedisplays.[/I]
 [*][B][COLOR=#4ECDC4]Selection:[/COLOR][/B] How far away /bd select reaches.
 [*][B][COLOR=#4ECDC4]Clicks:[/COLOR][/B] An optional cooldown between clicks, off by default.
 [*][B][COLOR=#4ECDC4]Text:[/COLOR][/B] The default background and billboard of new text displays.
-[*][B][COLOR=#4ECDC4]Animations:[/COLOR][/B] The height, speed, and smoothness of bouncing items.
+[*][B][COLOR=#4ECDC4]Animations:[/COLOR][/B] The height and speed of bouncing items, how far away displays render, and how often entities autosave.
 [/LIST]
 
 [SPOILER=config.yml]
@@ -109,11 +109,16 @@ text:
   default-background: "#40000000"
   default-billboard: true
 
+displays:
+  view-range: 1.0
+
 animations:
   bounce:
-    interval: 4
+    period: 160
     height: 0.12
-    speed: 0.15[/CODE]
+
+storage:
+  autosave: 5   # minutes[/CODE]
 [/SPOILER]
 
 [SIZE=5][B][COLOR=#FF0368]▸ Messages[/COLOR][/B][/SIZE]

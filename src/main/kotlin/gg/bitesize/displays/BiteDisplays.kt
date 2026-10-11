@@ -44,6 +44,7 @@ class BiteDisplays : JavaPlugin() {
         server.pluginManager.registerEvents(ProtectionListener, this)
 
         AnimationManager.start()
+        EntityDatabase.startAutosave()
 
         metrics = Metrics(this, BSTATS_PLUGIN_ID)
 
@@ -56,8 +57,9 @@ class BiteDisplays : JavaPlugin() {
         CommandManager.shutdown()
 
         AnimationManager.stop()
+        EntityDatabase.stopAutosave()
 
-        EntityDatabase.save()
+        EntityDatabase.saveNow()
         EntityManager.despawnAll()
     }
 

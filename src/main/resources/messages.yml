@@ -29,6 +29,7 @@ error-prefix: '<#F7567C>!! '
 # - <world>, <x>, <y>, <z> = entity location.
 # - <material> = the block or item a display shows.
 # - <select> = the info.list-select button (left out in the console).
+# - <page>, <pages> = the /bd list page and how many there are.
 # - <value>, <details>, <yaw>, <pitch> = entity details in the info section.
 
 types:
@@ -69,7 +70,9 @@ errors:
   usage-editline: '<#F7567C>Usage: /<label> editline <line> <text>'
   usage-shadow: '<#F7567C>Usage: /<label> shadow <true|false>'
   usage-billboard: '<#F7567C>Usage: /<label> billboard <true|false>'
-  usage-list: '<#F7567C>Usage: /<label> list [npc|item|block|text]'
+  usage-list: '<#F7567C>Usage: /<label> list [npc|item|block|text] [page]'
+  invalid-page: "<#F7567C>That page doesn't exist. There are <#4ECDC4><pages> <#F7567C>pages."
+  save-failed: "<#F7567C>Couldn't save entities.json. The console has the details."
   no-selection: '<#F7567C>Nothing selected. Look at an entity and use <#4ECDC4>/<label> select <#F7567C>first.'
   unsupported: '<#4ECDC4>/<label> <action> <#F7567C>only works on <types>.'
   nothing-in-sight: '<#F7567C>Look at an entity within <#4ECDC4><range> <#F7567C>blocks.'
@@ -134,7 +137,7 @@ help:
   setlocation: '<gray>- /<label> setlocation <x> <y> <z>'
   remove: '<gray>- /<label> remove'
   info: '<gray>- /<label> info'
-  list: '<gray>- /<label> list [npc|item|block|text]'
+  list: '<gray>- /<label> list [npc|item|block|text] [page]'
   save: '<gray>- /<label> save'
   reload: '<gray>- /<label> reload'
   types: '<gray>- /<label> help <npc|text|item|block> <dark_gray>(ways to edit each type)'
@@ -191,6 +194,11 @@ info:
   list-select: '<#FF0368>[SELECT]'
   list-select-hover: '<gray>Click to select <#F7FFF7><id>'
   list-lines: '<count> lines'
+  # Under a list with more than one page. <previous> and <next> are the buttons below, left out at either end.
+  list-page: '<gray>Page <#F7FFF7><page><gray>/<#F7FFF7><pages> <previous> <next>'
+  list-previous: '<#FF0368>[◀ PREV]'
+  list-next: '<#FF0368>[NEXT ▶]'
+  list-page-hover: '<gray>Go to page <#F7FFF7><page>'
   none: 'none'
   default: 'default'
   custom: 'custom'

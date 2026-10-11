@@ -18,9 +18,13 @@ class Settings private constructor(
     val clickCooldown: Long,
     val defaultTextBackground: Color,
     val defaultTextBillboard: Boolean,
-    val bounceInterval: Long,
+    /** Ticks for one full bounce. */
+    val bouncePeriod: Long,
     val bounceHeight: Float,
-    val bounceSpeed: Float,
+    /** How far players see displays, as a multiple of vanilla's distance. */
+    val displayViewRange: Float,
+    /** Ticks between saves of changed entities. 0 turns autosaving off. */
+    val autosaveTicks: Long,
 ) {
 
     fun isEnabled(feature: BiteType): Boolean = feature in features
@@ -46,9 +50,11 @@ class Settings private constructor(
                 clickCooldown = config.getLong("clicks.cooldown", 0).coerceAtLeast(0),
                 defaultTextBackground = background,
                 defaultTextBillboard = config.getBoolean("text.default-billboard", true),
-                bounceInterval = config.getLong("animations.bounce.interval", 4).coerceAtLeast(1),
+                bouncePeriod = config.getLong("animations.bounce.period", 160).coerceAtLeast(8),
                 bounceHeight = config.getDouble("animations.bounce.height", 0.12).toFloat(),
-                bounceSpeed = config.getDouble("animations.bounce.speed", 0.15).toFloat(),
+                displayViewRange = config.getDouble("displays.view-range", 1.0).coerceIn(0.1, 10.0).toFloat(),
+                // Minutes, decimals allowed
+                autosaveTicks = (config.getDouble("storage.autosave", 5.0).coerceAtLeast(0.0) * 60 * 20).toLong(),
             )
         }
 

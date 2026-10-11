@@ -3,10 +3,12 @@ package gg.bitesize.displays.managers
 import gg.bitesize.displays.models.*
 import gg.bitesize.displays.platform.Platform
 import gg.bitesize.displays.platform.Skin
+import gg.bitesize.displays.storage.EntityDatabase
 import gg.bitesize.displays.util.Colors
 import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.Location
+import org.bukkit.World
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.*
 import org.bukkit.util.BoundingBox
@@ -16,9 +18,9 @@ import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.sqrt
 
 object EntityManager {
 
@@ -35,6 +37,16 @@ object EntityManager {
         fun all(): List<Entity> = listOfNotNull(nameDisplay, interaction)
     }
     private val companions = ConcurrentHashMap<UUID, CompanionSet>()
+
+    /**
+     * Entities by the chunk their location is in, so chunk loads and unloads only look at their own.
+     * Kept from the stored location, whether or not the entity is spawned. Main thread only, like the rest.
+     */
+    private data class ChunkKey(val world: UUID, val x: Int, val z: Int)
+    private val chunkIndex = HashMap<ChunkKey, MutableSet<UUID>>()
+
+    /** Bounds that hold each display from any side ([boundsOf] without a viewer), until it changes. */
+    private val boundsCache = HashMap<UUID, BoundingBox>()
 
     private val platform get() = Platform.current
 
@@ -70,9 +82,13 @@ object EntityManager {
     fun findInSight(eye: Location, range: Double): BiteEntity? {
         val start = eye.toVector()
         val direction = eye.direction
+        val world = eye.world?.uid
 
         return entities.values.asSequence()
-            .filter { it.location.world?.uid == eye.world?.uid && bukkitEntities.containsKey(it.id) }
+            .filter { it.location.world?.uid == world && bukkitEntities.containsKey(it.id) }
+            // A cheap first pass against cached boxes that hold the entity from any side,
+            // so only entities near the line of sight get their exact bounds worked out
+            .filter { entity -> roughBounds(entity)?.clone()?.expand(SIGHT_MARGIN)?.rayTrace(start, direction, range) != null }
             .mapNotNull { entity ->
                 val box = boundsOf(entity, eye)?.expand(SIGHT_MARGIN) ?: return@mapNotNull null
                 val hit = box.rayTrace(start, direction, range) ?: return@mapNotNull null
@@ -84,18 +100,60 @@ object EntityManager {
 
     // ── Core CRUD ──────────────────────────────────────────────────
 
+    /** A new entity, spawned where a player stands. Kept only if it spawns. */
     fun spawn(entity: BiteEntity): Entity? {
         val bukkit = spawnBukkit(entity) ?: return null
 
-        entities[entity.id] = entity
+        register(entity)
         track(entity, bukkit)
         spawnCompanions(entity)
+        EntityDatabase.markDirty()
         return bukkit
+    }
+
+    /**
+     * A saved entity. It spawns now if its chunk is loaded, and otherwise when the chunk loads,
+     * so startup never loads chunks just to place entities.
+     */
+    fun restore(entity: BiteEntity) {
+        register(entity)
+        if (isLoaded(entity.location)) respawn(entity)
+    }
+
+    private fun register(entity: BiteEntity) {
+        entities[entity.id] = entity
+        chunkOf(entity.location)?.let { chunkIndex.getOrPut(it) { HashSet() }.add(entity.id) }
+        AnimationManager.sync(entity)
+    }
+
+    /** The entities whose location is in a chunk, spawned or not. */
+    fun inChunk(world: World, x: Int, z: Int): List<BiteEntity> {
+        return chunkIndex[ChunkKey(world.uid, x, z)]?.mapNotNull { entities[it] } ?: emptyList()
+    }
+
+    private fun unindex(id: UUID, location: Location) {
+        val key = chunkOf(location) ?: return
+        val ids = chunkIndex[key] ?: return
+        ids.remove(id)
+        if (ids.isEmpty()) chunkIndex.remove(key)
+    }
+
+    private fun chunkOf(location: Location): ChunkKey? {
+        val world = location.world ?: return null
+        return ChunkKey(world.uid, location.blockX shr 4, location.blockZ shr 4)
+    }
+
+    private fun isLoaded(location: Location): Boolean {
+        return location.world?.isChunkLoaded(location.blockX shr 4, location.blockZ shr 4) == true
     }
 
     /** Removes the entity for good, whether or not its chunk is loaded. */
     fun despawn(id: UUID): Boolean {
-        entities.remove(id) ?: return false
+        val entity = entities.remove(id) ?: return false
+        unindex(id, entity.location)
+        boundsCache.remove(id)
+        AnimationManager.forget(id)
+        EntityDatabase.markDirty()
         despawnCompanions(id)
         cleanupGlowTeam(id)
         bukkitEntities.remove(id)?.let { bukkit ->
@@ -136,22 +194,21 @@ object EntityManager {
     fun teleport(id: UUID, location: Location): Boolean {
         val entity = entities[id] ?: return false
 
+        unindex(id, entity.location)
         when (entity) {
             is BiteNpc -> entity.location = location
             is BiteBlock -> entity.location = location
             is BiteItem -> entity.location = location
             is BiteText -> entity.location = location
         }
+        chunkOf(location)?.let { chunkIndex.getOrPut(it) { HashSet() }.add(id) }
+        boundsCache.remove(id)
+        EntityDatabase.markDirty()
 
         // Chunk loads and unloads find entities by their location, so one moved into an unloaded chunk
         // leaves the world now and spawns when that chunk loads
-        val world = location.world
-        if (world == null || !world.isChunkLoaded(location.blockX shr 4, location.blockZ shr 4)) {
-            despawnCompanions(id)
-            bukkitEntities.remove(id)?.let { bukkit ->
-                owners.remove(bukkit.uniqueId)
-                bukkit.remove()
-            }
+        if (!isLoaded(location)) {
+            unloadBukkitEntity(id)
             return true
         }
 
@@ -175,12 +232,24 @@ object EntityManager {
         owners.clear()
         entities.clear()
         selections.clear()
+        chunkIndex.clear()
+        boundsCache.clear()
+        AnimationManager.clear()
     }
 
-    /** Drops the handles of an entity whose chunk unloaded. Its data stays for the next chunk load. */
-    fun removeBukkitEntity(id: UUID) {
-        bukkitEntities.remove(id)?.let { owners.remove(it.uniqueId) }
-        companions.remove(id)?.all()?.forEach { owners.remove(it.uniqueId) }
+    /**
+     * Removes the live entity and companions of one whose chunk unloaded or that moved into an unloaded chunk.
+     * Its data stays, and it spawns again when its chunk loads.
+     *
+     * Removed now rather than left to the server: entities unload separately from their chunk, so a chunk that
+     * unloads and loads again quickly still has the old entity when the new one spawns, and it would double up.
+     */
+    fun unloadBukkitEntity(id: UUID) {
+        despawnCompanions(id)
+        bukkitEntities.remove(id)?.let { bukkit ->
+            owners.remove(bukkit.uniqueId)
+            bukkit.remove()
+        }
     }
 
     fun respawn(entity: BiteEntity): Entity? {
@@ -192,6 +261,10 @@ object EntityManager {
     }
 
     fun updateEntity(entity: BiteEntity): Boolean {
+        boundsCache.remove(entity.id)
+        AnimationManager.sync(entity)
+        EntityDatabase.markDirty()
+
         // Unloaded entities pick up the changes when their chunk loads
         val bukkit = bukkitEntities[entity.id] ?: return false
 
@@ -238,6 +311,8 @@ object EntityManager {
             mannequin.isInvulnerable = true
             mannequin.isPersistent = false
             mannequin.setImmovable(true)
+            // Players walk through NPCs, and the NPC skips the collision checks a living entity runs every tick
+            mannequin.isCollidable = false
             applyNpc(npc, mannequin)
         }.also { mannequin ->
             // The glow team takes the entity's UUID, so it's applied once the entity exists
@@ -286,12 +361,14 @@ object EntityManager {
     }
 
     private fun applyBlock(block: BiteBlock, display: BlockDisplay) {
+        display.viewRange = ConfigManager.settings.displayViewRange
         display.block = block.itemStack.type.createBlockData()
         display.transformation = transformationOf(block)
         applyDisplayGlow(display, block.glowColor)
     }
 
     private fun applyItem(item: BiteItem, display: ItemDisplay) {
+        display.viewRange = ConfigManager.settings.displayViewRange
         display.setItemStack(item.itemStack)
         display.transformation = transformationOf(item)
         applyDisplayGlow(display, item.glowColor)
@@ -301,6 +378,7 @@ object EntityManager {
     }
 
     private fun applyText(text: BiteText, display: TextDisplay) {
+        display.viewRange = ConfigManager.settings.displayViewRange
         display.isSeeThrough = false
         display.billboard = if (text.billboard) Display.Billboard.CENTER else Display.Billboard.FIXED
         platform.setText(display, text.lines.joinToString("\n") { styled(it) })
@@ -328,7 +406,7 @@ object EntityManager {
             else -> return
         }
         if (nameText == null && command == null) return
-        val bounds = boundsOf(entity) ?: return
+        val bounds = roughBounds(entity) ?: return
 
         val set = CompanionSet(
             nameDisplay = nameText?.let { spawnNameLabel(entity, it, bounds) },
@@ -359,6 +437,7 @@ object EntityManager {
             platform.setText(label, styled(nameText))
             label.billboard = Display.Billboard.CENTER
             label.isPersistent = false
+            label.viewRange = ConfigManager.settings.displayViewRange
             // The background players chose for nametags and chat
             label.isDefaultBackground = true
         }
@@ -393,6 +472,16 @@ object EntityManager {
         is BiteItem -> modelBounds(entity.location, transformationOf(entity), Vector3f(-0.5f), Vector3f(0.5f), facesViewer = entity.bouncing, viewer)
         is BiteText -> textBounds(entity, viewer)
         else -> null
+    }
+
+    /**
+     * Bounds that hold the entity from any side: an NPC's live hitbox, or a display's [boundsOf] without a viewer,
+     * cached until the display changes or moves.
+     */
+    private fun roughBounds(entity: BiteEntity): BoundingBox? {
+        if (entity is BiteNpc) return bukkitEntities[entity.id]?.boundingBox
+        boundsCache[entity.id]?.let { return it }
+        return boundsOf(entity)?.also { boundsCache[entity.id] = it }
     }
 
     /** Text grows up from its location, centered, and wraps at the line width. The size is an estimate. */
@@ -435,7 +524,8 @@ object EntityManager {
         }
 
         if (facesViewer && viewer == null) {
-            val radius = maxOf(abs(low.x), abs(high.x), abs(low.z), abs(high.z))
+            // The farthest corner from the vertical axis, so the footprint covers the model turned any way
+            val radius = sqrt(maxOf(low.x * low.x, high.x * high.x) + maxOf(low.z * low.z, high.z * high.z))
             low.x = -radius; low.z = -radius
             high.x = radius; high.z = radius
         }
@@ -479,7 +569,7 @@ object EntityManager {
     // ── Transform helpers ──────────────────────────────────────────
 
     /** A display's transformation, before any bounce. Bounds are worked out from it too. */
-    private fun transformationOf(entity: BiteEntity): Transformation = when (entity) {
+    fun transformationOf(entity: BiteEntity): Transformation = when (entity) {
         is BiteBlock -> {
             val rotation = rotationOf(entity.yaw, entity.pitch)
             Transformation(blockOffset(entity.scale, rotation), rotation, Vector3f(entity.scale), Quaternionf())

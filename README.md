@@ -31,7 +31,7 @@ BiteDisplays is a lightweight way to bring your spawn, shops, and builds to life
 - **Modern formatting.** MiniMessage gradients, hex colors, and decorations in names, descriptions, and text lines. Classic `&` color codes work too.
 - **Point and edit.** New entities are selected for you. Look at any other one and `/bd select` it, or click **[SELECT]** in `/bd list`, then move, inspect, or remove it.
 - **Smart tab completion.** Suggests actions, glow colors, every game sound, online players for skins, entity IDs, and the lines on the text display you've selected.
-- **Lightweight.** Entities are vanilla mannequins and display entities, saved to one file and respawned as their chunks load. No extra libraries to install.
+- **Lightweight.** Entities are vanilla mannequins and display entities, saved to one file off the main thread and spawned only as their chunks load. Bouncing items are animated by players' games, not the server. No extra libraries to install.
 
 ## Getting started
 
@@ -90,7 +90,7 @@ Editing commands work on whatever you have selected, so you don't name the type.
 | `/bd setlocation <x> <y> <z>` | Moves your selection to exact coordinates, like `100.5 64 -20.5` for the center of a block. `/bd info` shows where it is now. |
 | `/bd remove` | Removes your selection |
 | `/bd info` | Shows everything about your selection |
-| `/bd list [npc\|item\|block\|text]` | Lists every entity, or one type, with a **[SELECT]** button on each |
+| `/bd list [npc\|item\|block\|text] [page]` | Lists every entity, or one type, 10 to a page, with a **[SELECT]** button on each |
 | `/bd save` | Saves all entities now |
 | `/bd reload` | Reloads `config.yml` and `messages.yml` |
 
@@ -155,12 +155,22 @@ text:
   # Whether new text displays turn to face players. Change one later with /bd billboard
   default-billboard: true
 
+displays:
+  # How far away players see displays (item, block, and text), as a multiple of vanilla's distance (about 64 blocks).
+  # Lower it on busy builds to stop far-off displays rendering. It doesn't change how hard the server works.
+  view-range: 1.0
+
 animations:
-  # Item displays with /bd bouncing true
+  # Item displays with /bd bouncing true. Players' games smooth the motion between updates,
+  # so the server only updates each item 8 times per bounce, and not at all while nobody can see it.
   bounce:
-    interval: 4    # ticks between steps, lower is smoother
+    period: 160    # ticks for one full bounce (20 ticks = 1 second), lower is faster
     height: 0.12   # blocks above and below the resting point
-    speed: 0.15    # higher bounces faster
+
+storage:
+  # Minutes between saves of entities.json, only when something changed. Saving happens off the main thread.
+  # 0 turns it off; entities are still saved with /bd save and when the server stops.
+  autosave: 5
 ```
 
 Run `/bd reload` after editing.
@@ -194,7 +204,7 @@ New messages from updates are filled in automatically, so you never need to rege
 <details>
 <summary><b>entities.json</b>: placed entities</summary>
 
-Every entity is saved here when the server stops and whenever you run `/bd save`. The file is only read on startup, so edit it only while the server is stopped.
+Every entity is saved here when the server stops, whenever you run `/bd save`, and every few minutes after a change (`storage.autosave`). Saves are written off the main thread and replace the file in one step, so a crash can't leave it half-written. The file is only read on startup, so edit it only while the server is stopped.
 
 </details>
 
