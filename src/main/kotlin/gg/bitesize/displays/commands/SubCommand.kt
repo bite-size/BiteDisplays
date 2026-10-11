@@ -15,15 +15,12 @@ import org.bukkit.entity.Player
 import java.math.BigDecimal
 
 /**
- * A `/bitedisplays <name> ...` subcommand. The root command checks player-only,
- * permission, and feature toggles before calling [execute].
+ * A `/bitedisplays <name> ...` subcommand. The root command checks player-only and
+ * [permission] before calling [execute]. Commands for one entity type also check [checkType].
  */
 abstract class SubCommand(
     val name: String,
     val permission: String,
-    /** help.<key> lines shown for this subcommand */
-    val helpKeys: List<String> = listOf(name),
-    val feature: BiteType? = null,
     val playerOnly: Boolean = true,
 ) {
 
@@ -34,10 +31,22 @@ abstract class SubCommand(
     /** [args] excludes the subcommand name itself. */
     open fun tabComplete(sender: CommandSender, args: List<String>): List<String> = emptyList()
 
-    fun isAvailableTo(sender: CommandSender): Boolean {
-        return (!playerOnly || sender is Player)
-                && sender.hasPermission(permission)
-                && (feature == null || settings.isEnabled(feature))
+    /** Whether help and tab completion list this for [sender]. */
+    open fun isAvailableTo(sender: CommandSender): Boolean {
+        return (!playerOnly || sender is Player) && sender.hasPermission(permission)
+    }
+
+    /** True if [sender] may create and edit [type], or false after telling them why not. */
+    protected fun checkType(sender: CommandSender, type: BiteType): Boolean {
+        if (!sender.hasPermission(Permissions.forType(type))) {
+            error(sender, "no-permission")
+            return false
+        }
+        if (!settings.isEnabled(type)) {
+            error(sender, "feature-disabled")
+            return false
+        }
+        return true
     }
 
     /** Sends `errors.<key>`. */
@@ -113,6 +122,15 @@ abstract class SubCommand(
     /** A number without trailing zeros: 2.0 shows as 2, 0.50 as 0.5. */
     protected fun number(value: Number): String {
         return BigDecimal(value.toString()).stripTrailingZeros().toPlainString()
+    }
+
+    companion object {
+
+        /** Whether [sender] may create and edit [type]: its permission, and its feature turned on. */
+        fun canUse(sender: CommandSender, type: BiteType): Boolean {
+            return sender.hasPermission(Permissions.forType(type)) && ConfigManager.settings.isEnabled(type)
+        }
+
     }
 
 }

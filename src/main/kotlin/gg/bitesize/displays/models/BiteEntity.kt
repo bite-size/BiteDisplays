@@ -38,13 +38,17 @@ interface BiteEntity {
     val displayId: String get() = "${type.key}-$number"
 }
 
+/** An entity that runs a command when right-clicked: every type. */
+interface Clickable : BiteEntity {
+    var command: ClickCommand?
+}
+
 /** An item or block display: both can be rotated, scaled, named, clicked, and made to glow. */
-interface BiteDisplay : BiteEntity {
+interface BiteDisplay : Clickable {
     var scale: Vector3f
     var yaw: Float
     var pitch: Float
     var nameText: String?
-    var command: ClickCommand?
     /** A color name or hex. Null means no glow. */
     var glowColor: String?
 }

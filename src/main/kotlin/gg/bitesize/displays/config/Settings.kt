@@ -16,7 +16,6 @@ class Settings private constructor(
     val selectionRange: Double,
     /** Ticks a player waits between clicks on NPCs and displays. 0 lets every click through. */
     val clickCooldown: Long,
-    val defaultTextLine: String,
     val defaultTextBackground: Color,
     val defaultTextBillboard: Boolean,
     val bounceInterval: Long,
@@ -45,7 +44,6 @@ class Settings private constructor(
                 features = features,
                 selectionRange = config.getDouble("selection.range", 5.0).coerceIn(1.0, 64.0),
                 clickCooldown = config.getLong("clicks.cooldown", 0).coerceAtLeast(0),
-                defaultTextLine = config.getString("text.default-line", "Text Display")!!,
                 defaultTextBackground = background,
                 defaultTextBillboard = config.getBoolean("text.default-billboard", true),
                 bounceInterval = config.getLong("animations.bounce.interval", 4).coerceAtLeast(1),

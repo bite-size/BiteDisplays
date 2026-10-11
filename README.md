@@ -17,17 +17,17 @@
 BiteDisplays is a lightweight way to bring your spawn, shops, and builds to life. Place NPCs with real player skins, floating text, and item or block displays right where you stand, style them with MiniMessage, and have them run commands when players click them. Everything is managed in-game with a single command.
 
 ```text
-/bd npc create <gradient:#FF0368:#4ECDC4>Bite Keeper</gradient>
-/bd npc skin Notch
-/bd npc cmd console warp shop @p
-/bd text create <#FF0368>Welcome to the server
-/bd item bouncing true
+/bd create npc <gradient:#FF0368:#4ECDC4>Bite Keeper</gradient>
+/bd skin Notch
+/bd cmd console warp shop @p
+/bd create text <#FF0368>Welcome to the server
+/bd glow aqua
 ```
 
 ## Highlights
 
 - **Four entity types.** NPCs with skins, equipment, and any size, multi-line text displays, and displays of any item or block. NPCs can't be hurt, even by players in creative mode.
-- **Click actions.** NPCs and item and block displays run a command when right-clicked, as the console or as the player who clicked, with `@p` filled in. NPCs can play a sound too.
+- **Click actions.** NPCs, text, and item and block displays run a command when right-clicked, as the console or as the player who clicked, with `@p` filled in. NPCs can play a sound too.
 - **Modern formatting.** MiniMessage gradients, hex colors, and decorations in names, descriptions, and text lines. Classic `&` color codes work too.
 - **Point and edit.** New entities are selected for you. Look at any other one and `/bd select` it, or click **[SELECT]** in `/bd list`, then move, inspect, or remove it.
 - **Smart tab completion.** Suggests actions, glow colors, every game sound, online players for skins, entity IDs, and the lines on the text display you've selected.
@@ -44,58 +44,45 @@ BiteDisplays is a lightweight way to bring your spawn, shops, and builds to life
 
 ## Commands
 
-The main command is `/bitedisplays`, with the shorter alias `/bd`. New entities appear where you stand and are selected right away, so you can keep editing them. Most other commands work on your selection. Every entity gets an ID like `npc-1` or `text-3`.
+The main command is `/bitedisplays`, with the shorter alias `/bd`. New entities appear where you stand and are selected right away, so you can keep editing them. Every entity gets an ID like `npc-1` or `text-3`.
 
-Leave out a `[value]` to remove it, like `/bd npc glow` to stop an NPC glowing (`none` works too).
-
-### NPCs
+### Creating
 
 | Command | What it does |
 |---|---|
-| `/bd npc create <name>` | Creates an NPC |
-| `/bd npc skin <player>` | Gives it a player's skin |
-| `/bd npc name [name]` | Sets the name above its head |
-| `/bd npc desc [text]` | Sets the line under the name |
-| `/bd npc size <scale>` | Scales it, from `0.0625` to `16` |
-| `/bd npc glow [color]` | Makes it glow in a color like `red` or `aqua` |
-| `/bd npc cmd [<console\|player> <command>]` | Runs a command when it's right-clicked |
-| `/bd npc sound [sound]` | Plays a sound when it's right-clicked, like `entity.experience_orb.pickup` |
-| `/bd npc equipment` | Opens a menu for its armor and held items |
+| `/bd create npc [name]` | Creates an NPC |
+| `/bd create text <text>` | Creates a text display, with its first line |
+| `/bd create item [name]` | Creates a display of the item you're holding |
+| `/bd create block [name]` | Creates a display of the block you're holding |
 
-### Text displays
+### Editing your selection
 
-| Command | What it does |
-|---|---|
-| `/bd text create [text]` | Creates a text display |
-| `/bd text addline <text>` | Adds a line |
-| `/bd text editline <line> <text>` | Replaces a line |
-| `/bd text delline <line>` | Removes a line |
-| `/bd text background [hex]` | Sets the background, like `#FF0368` or `#80FF0368` with opacity. Leave it out to go back to the default. |
-| `/bd text cmd [<console\|player> <command>]` | Runs a command when it's right-clicked. Leave it out to remove the command. |
-| `/bd text shadow <true\|false>` | Gives the text a drop shadow (off by default) |
-| `/bd text billboard <true\|false>` | Turns it to face players (on by default) |
-| `/bd text size <scale>` | Scales it |
+Editing commands work on whatever you have selected, so you don't name the type. A command that doesn't fit your selection says which types it works on. Leave out a `[value]` to remove it, like `/bd glow` to stop something glowing (`none` works too).
 
-### Item and block displays
-
-Hold the item or block you want to show, then use `item` or `block`:
-
-| Command | What it does |
-|---|---|
-| `/bd item create` | Creates a display of the item you're holding |
-| `/bd block create` | Creates a display of the block you're holding |
-| `/bd <item\|block> rotate <yaw\|pitch> <degrees>` | Rotates it |
-| `/bd <item\|block> size <scale>` | Scales it |
-| `/bd <item\|block> name [name]` | Shows a name above it |
-| `/bd <item\|block> cmd [<console\|player> <command>]` | Runs a command when it's right-clicked |
-| `/bd <item\|block> glow [color]` | Makes it glow in a color name or hex color |
-| `/bd item bouncing <true\|false>` | Bobs the item up and down |
+| Command | Works on | What it does |
+|---|---|---|
+| `/bd name [name]` | NPC, item, block | Sets the name above it |
+| `/bd size <scale>` | All | Scales it. NPCs go from `0.0625` to `16`. |
+| `/bd glow [color]` | NPC, item, block | Makes it glow. NPCs take color names like `red` or `aqua`, displays hex colors too. |
+| `/bd cmd [<console\|player> <command>]` | All | Runs a command when it's right-clicked |
+| `/bd rotate <yaw\|pitch> <degrees>` | Item, block | Rotates it |
+| `/bd skin <player>` | NPC | Gives it a player's skin |
+| `/bd desc [text]` | NPC | Sets the line under the name |
+| `/bd sound [sound]` | NPC | Plays a sound when it's right-clicked, like `entity.experience_orb.pickup` |
+| `/bd equipment` | NPC | Opens a menu for its armor and held items |
+| `/bd addline <text>` | Text | Adds a line |
+| `/bd editline <line> <text>` | Text | Replaces a line |
+| `/bd delline <line>` | Text | Removes a line |
+| `/bd background [hex]` | Text | Sets the background, like `#FF0368` or `#80FF0368` with opacity. Leave it out to go back to the default. |
+| `/bd shadow <true\|false>` | Text | Gives the text a drop shadow (off by default) |
+| `/bd billboard <true\|false>` | Text | Turns it to face players (on by default) |
+| `/bd bouncing <true\|false>` | Item | Bobs the item up and down |
 
 ### Managing entities
 
 | Command | What it does |
 |---|---|
-| `/bd help` | Shows the commands you can use. `/bd npc`, `/bd text`, `/bd item`, and `/bd block` list their own. |
+| `/bd help [npc\|text\|item\|block]` | Shows the commands you can use, or every way to edit one type |
 | `/bd select [id]` | Selects the entity you're looking at, or the one with that ID |
 | `/bd movehere` | Moves your selection to you |
 | `/bd remove` | Removes your selection |
@@ -110,10 +97,10 @@ Hold the item or block you want to show, then use `item` or `block`:
 |---|---|
 | `bitedisplays.*` | Every BiteDisplays permission |
 | `bitedisplays.use` | `/bd` and the help menu |
-| `bitedisplays.npc` | NPC commands |
-| `bitedisplays.text` | Text display commands |
-| `bitedisplays.item` | Item display commands |
-| `bitedisplays.block` | Block display commands |
+| `bitedisplays.npc` | Creating and editing NPCs |
+| `bitedisplays.text` | Creating and editing text displays |
+| `bitedisplays.item` | Creating and editing item displays |
+| `bitedisplays.block` | Creating and editing block displays |
 | `bitedisplays.manage` | `select`, `movehere`, `remove`, `info`, and `list` |
 | `bitedisplays.admin` | `save` and `reload` |
 
@@ -133,7 +120,7 @@ Names, descriptions, and text lines all use [MiniMessage](https://docs.advntr.de
 
 On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts. Spigot only accepts classic text, so colors, gradients, and decorations work there, but tags like `<font>` and `<lang>` don't.
 
-**Glow colors:** NPCs glow in the 16 color names (`red`, `aqua`, `gold`, ...). Text, item, and block displays also take hex colors like `#FF0368`. `none` turns the glow off.
+**Glow colors:** NPCs glow in the 16 color names (`red`, `aqua`, `gold`, ...). Item and block displays also take hex colors like `#FF0368`. `none` turns the glow off. Text displays can't glow, so try `/bd shadow true` on them.
 
 **Click commands** run as the console or as the player who clicked, with that player's own permissions. The `/` is optional, and `@p` becomes the name of the player who clicked. To stop players spamming them, set `clicks.cooldown` in config.yml.
 
@@ -159,16 +146,14 @@ clicks:
   cooldown: 0
 
 text:
-  # The first line of a new text display when you don't give one
-  default-line: "Text Display"
   # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity).
-  # #40000000 is vanilla's. /bd text background none puts a display back on this one.
+  # #40000000 is vanilla's. /bd background none puts a display back on this one.
   default-background: "#40000000"
-  # Whether new text displays turn to face players. Change one later with /bd text billboard
+  # Whether new text displays turn to face players. Change one later with /bd billboard
   default-billboard: true
 
 animations:
-  # Item displays with /bd item bouncing true
+  # Item displays with /bd bouncing true
   bounce:
     interval: 4    # ticks between steps, lower is smoother
     height: 0.12   # blocks above and below the resting point

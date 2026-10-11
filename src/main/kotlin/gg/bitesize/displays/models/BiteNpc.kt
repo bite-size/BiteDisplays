@@ -11,7 +11,7 @@ data class BiteNpc(
     var name: String? = null,
     var skinValue: String? = null,
     var skinSignature: String? = null,
-    var command: ClickCommand? = null,
+    override var command: ClickCommand? = null,
     var glowColor: String? = null,
     /** Null hides the line below the name. */
     var description: String? = null,
@@ -24,7 +24,7 @@ data class BiteNpc(
     var chestplate: ItemStack? = null,
     var leggings: ItemStack? = null,
     var boots: ItemStack? = null
-) : BiteEntity {
+) : Clickable {
     override val type: BiteType get() = BiteType.NPC
 
     companion object {

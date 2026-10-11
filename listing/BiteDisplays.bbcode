@@ -7,7 +7,7 @@ Your spawn deserves more than signs. BiteDisplays lets you place NPCs with real 
 [SIZE=5][B][COLOR=#FF0368]▸ Key Features[/COLOR][/B][/SIZE]
 [LIST]
 [*][B][COLOR=#4ECDC4]Four Entity Types:[/COLOR][/B] NPCs with skins, equipment, and any size, multi-line text displays, and item and block displays.
-[*][B][COLOR=#4ECDC4]Click Actions:[/COLOR][/B] NPCs and item and block displays run a command when right-clicked, as the console or the player, with @p filled in. NPCs can play a sound too.
+[*][B][COLOR=#4ECDC4]Click Actions:[/COLOR][/B] NPCs, text, and item and block displays run a command when right-clicked, as the console or the player, with @p filled in. NPCs can play a sound too.
 [*][B][COLOR=#4ECDC4]Modern Formatting:[/COLOR][/B] MiniMessage gradients, HEX colors, and decorations in every name and line. Classic & codes work too.
 [*][B][COLOR=#4ECDC4]Point & Edit:[/COLOR][/B] New entities are selected for you. Look at any other one, or click [SELECT] in the list, then move, inspect, or remove it.
 [*][B][COLOR=#4ECDC4]Spigot, Paper & Purpur:[/COLOR][/B] One jar that runs on all three, tested on each.
@@ -37,44 +37,35 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 [*]Lightweight: entities are vanilla mannequins and displays, saved to one file and respawned as their chunks load.
 [/LIST]
 
-[SIZE=5][B][COLOR=#FF0368]▸ NPC Commands[/COLOR][/B][/SIZE]
+[SIZE=5][B][COLOR=#FF0368]▸ Creating[/COLOR][/B][/SIZE]
 [LIST]
-[*][B][COLOR=#4ECDC4]/bd npc create <name>[/COLOR][/B] - Create an NPC where you stand
-[*][B][COLOR=#4ECDC4]/bd npc skin <player>[/COLOR][/B] - Use a player's skin
-[*][B][COLOR=#4ECDC4]/bd npc name [name][/COLOR][/B] - Set the name
-[*][B][COLOR=#4ECDC4]/bd npc desc [text][/COLOR][/B] - Set the line under the name
-[*][B][COLOR=#4ECDC4]/bd npc size <scale>[/COLOR][/B] - Scale the NPC
-[*][B][COLOR=#4ECDC4]/bd npc glow [color][/COLOR][/B] - Glow in a color
-[*][B][COLOR=#4ECDC4]/bd npc cmd [<console|player> <command>][/COLOR][/B] - Run a command on right-click
-[*][B][COLOR=#4ECDC4]/bd npc sound [sound][/COLOR][/B] - Play a sound on right-click
-[*][B][COLOR=#4ECDC4]/bd npc equipment[/COLOR][/B] - Open the equipment menu
+[*][B][COLOR=#4ECDC4]/bd create npc [name][/COLOR][/B] - Create an NPC where you stand
+[*][B][COLOR=#4ECDC4]/bd create text <text>[/COLOR][/B] - Create a text display with its first line
+[*][B][COLOR=#4ECDC4]/bd create item [name][/COLOR][/B] / [B][COLOR=#4ECDC4]/bd create block [name][/COLOR][/B] - Display the item or block you're holding
 [/LIST]
 
-[SIZE=5][B][COLOR=#FF0368]▸ Text Display Commands[/COLOR][/B][/SIZE]
+[SIZE=5][B][COLOR=#FF0368]▸ Editing[/COLOR][/B][/SIZE]
+Editing commands work on your selection, whatever it is. If one doesn't fit, it tells you which types it works on.
 [LIST]
-[*][B][COLOR=#4ECDC4]/bd text create [text][/COLOR][/B] - Create a text display where you stand
-[*][B][COLOR=#4ECDC4]/bd text addline <text>[/COLOR][/B] - Add a line
-[*][B][COLOR=#4ECDC4]/bd text editline <line> <text>[/COLOR][/B] - Replace a line
-[*][B][COLOR=#4ECDC4]/bd text delline <line>[/COLOR][/B] - Remove a line
-[*][B][COLOR=#4ECDC4]/bd text background [hex][/COLOR][/B] - Set the background color
-[*][B][COLOR=#4ECDC4]/bd text cmd [<console|player> <command>][/COLOR][/B] - Run a command on right-click
-[*][B][COLOR=#4ECDC4]/bd text shadow <true|false>[/COLOR][/B] - Drop shadow (off by default)
-[*][B][COLOR=#4ECDC4]/bd text billboard <true|false>[/COLOR][/B] - Turn to face players (on by default)
-[*][B][COLOR=#4ECDC4]/bd text size <scale>[/COLOR][/B] - Scale the text
+[*][B][COLOR=#4ECDC4]/bd name [name][/COLOR][/B] - Set the name [I](NPC, item, block)[/I]
+[*][B][COLOR=#4ECDC4]/bd size <scale>[/COLOR][/B] - Scale it [I](all)[/I]
+[*][B][COLOR=#4ECDC4]/bd glow [color][/COLOR][/B] - Glow in a color name, or HEX for displays [I](NPC, item, block)[/I]
+[*][B][COLOR=#4ECDC4]/bd cmd [<console|player> <command>][/COLOR][/B] - Run a command on right-click [I](all)[/I]
+[*][B][COLOR=#4ECDC4]/bd rotate <yaw|pitch> <degrees>[/COLOR][/B] - Rotate it [I](item, block)[/I]
+[*][B][COLOR=#4ECDC4]/bd skin <player>[/COLOR][/B] - Use a player's skin [I](NPC)[/I]
+[*][B][COLOR=#4ECDC4]/bd desc [text][/COLOR][/B] - Set the line under the name [I](NPC)[/I]
+[*][B][COLOR=#4ECDC4]/bd sound [sound][/COLOR][/B] - Play a sound on right-click [I](NPC)[/I]
+[*][B][COLOR=#4ECDC4]/bd equipment[/COLOR][/B] - Open the equipment menu [I](NPC)[/I]
+[*][B][COLOR=#4ECDC4]/bd addline <text>[/COLOR][/B] - Add a line [I](text)[/I]
+[*][B][COLOR=#4ECDC4]/bd editline <line> <text>[/COLOR][/B] - Replace a line [I](text)[/I]
+[*][B][COLOR=#4ECDC4]/bd delline <line>[/COLOR][/B] - Remove a line [I](text)[/I]
+[*][B][COLOR=#4ECDC4]/bd background [hex][/COLOR][/B] - Set the background color [I](text)[/I]
+[*][B][COLOR=#4ECDC4]/bd shadow <true|false>[/COLOR][/B] - Drop shadow, off by default [I](text)[/I]
+[*][B][COLOR=#4ECDC4]/bd billboard <true|false>[/COLOR][/B] - Turn to face players, on by default [I](text)[/I]
+[*][B][COLOR=#4ECDC4]/bd bouncing <true|false>[/COLOR][/B] - Bob the item up and down [I](item)[/I]
 [/LIST]
 
-[SIZE=5][B][COLOR=#FF0368]▸ Item & Block Display Commands[/COLOR][/B][/SIZE]
-[LIST]
-[*][B][COLOR=#4ECDC4]/bd item create[/COLOR][/B] / [B][COLOR=#4ECDC4]/bd block create[/COLOR][/B] - Display the item or block you're holding
-[*][B][COLOR=#4ECDC4]/bd <item|block> rotate <yaw|pitch> <degrees>[/COLOR][/B] - Rotate it
-[*][B][COLOR=#4ECDC4]/bd <item|block> size <scale>[/COLOR][/B] - Scale it
-[*][B][COLOR=#4ECDC4]/bd <item|block> name [name][/COLOR][/B] - Show a name above it
-[*][B][COLOR=#4ECDC4]/bd <item|block> cmd [<console|player> <command>][/COLOR][/B] - Run a command on right-click
-[*][B][COLOR=#4ECDC4]/bd <item|block> glow [color][/COLOR][/B] - Glow in a color name or HEX color
-[*][B][COLOR=#4ECDC4]/bd item bouncing <true|false>[/COLOR][/B] - Bob the item up and down
-[/LIST]
-
-Leave out a [value] to remove it. In commands, @p is the player who clicked.
+Leave out a [value] to remove it. In commands, @p is the player who clicked. /bd help <type> lists every command for one type.
 
 [SIZE=5][B][COLOR=#FF0368]▸ Managing Entities & Permissions[/COLOR][/B][/SIZE]
 [LIST]
@@ -95,7 +86,7 @@ All permissions default to op. [I]Every command also works as /bitedisplays.[/I]
 [*][B][COLOR=#4ECDC4]Features:[/COLOR][/B] Toggle NPCs, item, block, and text displays individually.
 [*][B][COLOR=#4ECDC4]Selection:[/COLOR][/B] How far away /bd select reaches.
 [*][B][COLOR=#4ECDC4]Clicks:[/COLOR][/B] An optional cooldown between clicks, off by default.
-[*][B][COLOR=#4ECDC4]Text:[/COLOR][/B] The default first line, background, and billboard of new text displays.
+[*][B][COLOR=#4ECDC4]Text:[/COLOR][/B] The default background and billboard of new text displays.
 [*][B][COLOR=#4ECDC4]Animations:[/COLOR][/B] The height, speed, and smoothness of bouncing items.
 [/LIST]
 
@@ -113,7 +104,6 @@ clicks:
   cooldown: 0   # ticks
 
 text:
-  default-line: "Text Display"
   default-background: "#40000000"
   default-billboard: true
 

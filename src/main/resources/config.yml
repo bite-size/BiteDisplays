@@ -23,16 +23,14 @@ clicks:
 # and legacy codes (&a, &l, &#FF0368).
 # Run /bd reload after editing.
 text:
-  # The first line of a new text display when you don't give one
-  default-line: "Text Display"
   # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity).
-  # #40000000 is vanilla's. /bd text background none puts a display back on this one.
+  # #40000000 is vanilla's. /bd background none puts a display back on this one.
   default-background: "#40000000"
-  # Whether new text displays turn to face players. Change one later with /bd text billboard
+  # Whether new text displays turn to face players. Change one later with /bd billboard
   default-billboard: true
 
 animations:
-  # Item displays with /bd item bouncing true
+  # Item displays with /bd bouncing true
   bounce:
     interval: 4    # ticks between steps, lower is smoother
     height: 0.12   # blocks above and below the resting point

@@ -2,10 +2,9 @@ package gg.bitesize.displays.listeners
 
 import gg.bitesize.displays.managers.ConfigManager
 import gg.bitesize.displays.managers.EntityManager
-import gg.bitesize.displays.models.BiteDisplay
 import gg.bitesize.displays.models.BiteNpc
-import gg.bitesize.displays.models.BiteText
 import gg.bitesize.displays.models.ClickCommand
+import gg.bitesize.displays.models.Clickable
 import gg.bitesize.displays.models.CommandRunner
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -41,15 +40,9 @@ object EntityInteractListener : Listener {
         val player = event.player
         if (!offCooldown(player)) return
 
-        when (entity) {
-            is BiteNpc -> {
-                // String-based playSound for registry-backed sounds
-                entity.sound?.let { player.playSound(entity.location, "minecraft:$it", 1.0f, 1.0f) }
-                entity.command?.let { run(player, it) }
-            }
-            is BiteDisplay -> entity.command?.let { run(player, it) }
-            is BiteText -> entity.command?.let { run(player, it) }
-        }
+        // String-based playSound for registry-backed sounds
+        if (entity is BiteNpc) entity.sound?.let { player.playSound(entity.location, "minecraft:$it", 1.0f, 1.0f) }
+        (entity as? Clickable)?.command?.let { run(player, it) }
     }
 
     fun forget(player: Player) {
