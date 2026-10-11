@@ -111,7 +111,9 @@ object EntityDatabase {
                 lines = entity.lines,
                 backgroundColor = entity.backgroundColor,
                 scaleX = entity.scale.x, scaleY = entity.scale.y, scaleZ = entity.scale.z,
-                textGlowColor = entity.glowColor,
+                displayCommand = entity.command?.command,
+                commandRunner = entity.command?.runner?.key,
+                shadow = entity.shadow,
                 billboard = entity.billboard
             )
             else -> null
@@ -183,7 +185,8 @@ object EntityDatabase {
                 lines = data.lines?.toMutableList() ?: mutableListOf(),
                 scale = Vector3f(data.scaleX, data.scaleY, data.scaleZ),
                 backgroundColor = data.backgroundColor,
-                glowColor = data.textGlowColor,
+                command = command(data.displayCommand),
+                shadow = data.shadow,
                 billboard = data.billboard
             )
             else -> null
@@ -248,6 +251,7 @@ private data class SerializedEntity(
     val rotationYaw: Float = 0f,
     val rotationPitch: Float = 0f,
     val nameText: String? = null,
+    /** Item, block, and text click command. */
     val displayCommand: String? = null,
     /** Only read, from files saved before glow became a color alone. */
     val displayGlowing: Boolean? = null,
@@ -259,6 +263,6 @@ private data class SerializedEntity(
     // ── Text display fields ──
     val lines: List<String>? = null,
     val backgroundColor: String? = null,
-    val textGlowColor: String? = null,
+    val shadow: Boolean = false,
     val billboard: Boolean = false
 )

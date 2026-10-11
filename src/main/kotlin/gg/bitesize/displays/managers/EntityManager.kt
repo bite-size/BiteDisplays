@@ -293,7 +293,7 @@ object EntityManager {
         display.billboard = if (text.billboard) Display.Billboard.CENTER else Display.Billboard.FIXED
         platform.setText(display, text.lines.joinToString("\n") { styled(it) })
         display.backgroundColor = backgroundOf(text)
-        applyDisplayGlow(display, text.glowColor)
+        display.isShadowed = text.shadow
         display.transformation = transformationOf(text)
     }
 
@@ -309,13 +309,18 @@ object EntityManager {
     // ── Companion entity helpers ───────────────────────────────────
 
     private fun spawnCompanions(entity: BiteEntity) {
-        if (entity !is BiteDisplay) return
-        if (entity.nameText == null && entity.command == null) return
+        // Text is its own label, so it only needs a hitbox for its click command
+        val (nameText, command) = when (entity) {
+            is BiteDisplay -> entity.nameText to entity.command
+            is BiteText -> null to entity.command
+            else -> return
+        }
+        if (nameText == null && command == null) return
         val bounds = boundsOf(entity) ?: return
 
         val set = CompanionSet(
-            nameDisplay = entity.nameText?.let { spawnNameLabel(entity, it, bounds) },
-            interaction = entity.command?.let { spawnHitbox(entity, bounds) },
+            nameDisplay = nameText?.let { spawnNameLabel(entity, it, bounds) },
+            interaction = command?.let { spawnHitbox(entity, bounds) },
         )
         set.all().forEach { owners[it.uniqueId] = entity.id }
         companions[entity.id] = set
@@ -335,7 +340,7 @@ object EntityManager {
     }
 
     /** A name centered above the model, like a nametag. */
-    private fun spawnNameLabel(display: BiteDisplay, nameText: String, bounds: BoundingBox): Entity? {
+    private fun spawnNameLabel(display: BiteEntity, nameText: String, bounds: BoundingBox): Entity? {
         val world = display.location.world ?: return null
         val labelLocation = Location(world, bounds.centerX, bounds.maxY + NAME_GAP, bounds.centerZ)
         return world.spawn(labelLocation, TextDisplay::class.java) { label ->
@@ -347,8 +352,11 @@ object EntityManager {
         }
     }
 
-    /** An Interaction hitbox covering the model, so clicks land where the display appears. */
-    private fun spawnHitbox(display: BiteDisplay, bounds: BoundingBox): Entity? {
+    /**
+     * An Interaction hitbox covering the model, so clicks land where the display appears.
+     * Text that faces players gets a footprint as wide as the text, so it covers it from every side.
+     */
+    private fun spawnHitbox(display: BiteEntity, bounds: BoundingBox): Entity? {
         val world = display.location.world ?: return null
         val base = Location(world, bounds.centerX, bounds.minY, bounds.centerZ)
         return world.spawn(base, Interaction::class.java) { interaction ->

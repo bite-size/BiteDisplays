@@ -11,7 +11,8 @@ data class BiteText(
     var lines: MutableList<String> = mutableListOf(),
     var scale: Vector3f = Vector3f(1f, 1f, 1f),
     var backgroundColor: String? = null,
-    var glowColor: String? = null,
+    var command: ClickCommand? = null,
+    var shadow: Boolean = false,
     var billboard: Boolean = true
 ) : BiteEntity {
     override val type: BiteType get() = BiteType.TEXT

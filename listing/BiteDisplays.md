@@ -61,7 +61,8 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 | `/bd text editline <line> <text>` | Replace a line |
 | `/bd text delline <line>` | Remove a line |
 | `/bd text background [hex]` | Set the background color |
-| `/bd text glow [color]` | Glow in a color name or HEX color |
+| `/bd text cmd [<console\|player> <command>]` | Run a command on right-click |
+| `/bd text shadow <true\|false>` | Drop shadow (off by default) |
 | `/bd text billboard <true\|false>` | Turn to face players (on by default) |
 | `/bd text size <scale>` | Scale the text |
 

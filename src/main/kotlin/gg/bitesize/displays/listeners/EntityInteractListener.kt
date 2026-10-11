@@ -4,6 +4,7 @@ import gg.bitesize.displays.managers.ConfigManager
 import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.models.BiteDisplay
 import gg.bitesize.displays.models.BiteNpc
+import gg.bitesize.displays.models.BiteText
 import gg.bitesize.displays.models.ClickCommand
 import gg.bitesize.displays.models.CommandRunner
 import org.bukkit.Bukkit
@@ -16,7 +17,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Handles players right-clicking NPCs and display hitboxes: plays the NPC's sound and runs the click command.
+ * Handles players right-clicking NPCs and display and text hitboxes: plays the NPC's sound and runs the click command.
  */
 object EntityInteractListener : Listener {
 
@@ -47,6 +48,7 @@ object EntityInteractListener : Listener {
                 entity.command?.let { run(player, it) }
             }
             is BiteDisplay -> entity.command?.let { run(player, it) }
+            is BiteText -> entity.command?.let { run(player, it) }
         }
     }
 

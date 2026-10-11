@@ -71,7 +71,8 @@ Leave out a `[value]` to remove it, like `/bd npc glow` to stop an NPC glowing (
 | `/bd text editline <line> <text>` | Replaces a line |
 | `/bd text delline <line>` | Removes a line |
 | `/bd text background [hex]` | Sets the background, like `#FF0368` or `#80FF0368` with opacity. Leave it out to go back to the default. |
-| `/bd text glow [color]` | Makes it glow in a color name or hex color |
+| `/bd text cmd [<console\|player> <command>]` | Runs a command when it's right-clicked. Leave it out to remove the command. |
+| `/bd text shadow <true\|false>` | Gives the text a drop shadow (off by default) |
 | `/bd text billboard <true\|false>` | Turns it to face players (on by default) |
 | `/bd text size <scale>` | Scales it |
 

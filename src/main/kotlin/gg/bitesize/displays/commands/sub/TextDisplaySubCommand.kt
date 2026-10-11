@@ -13,7 +13,7 @@ import java.util.UUID
 
 class TextDisplaySubCommand : EntitySubCommand<BiteText>(
     BiteType.TEXT, Permissions.TEXT,
-    listOf("create", "background", "addline", "delline", "editline", "glow", "billboard", "size"),
+    listOf("create", "background", "addline", "delline", "editline", "cmd", "shadow", "billboard", "size"),
 ) {
 
     override fun execute(player: Player, action: String, label: String, args: List<String>) {
@@ -26,11 +26,11 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
             "addline" -> addLine(player, text, label, args)
             "delline" -> deleteLine(player, text, label, args)
             "editline" -> editLine(player, text, label, args)
-            // Displays glow in any color, named or hex
-            "glow" -> glow(player, args, { Colors.parse(it) != null }, "invalid-glow-color") {
-                text.glowColor = it
+            "cmd" -> command(player, label, args) {
+                text.command = it
                 EntityManager.updateEntity(text)
             }
+            "shadow" -> shadow(player, text, label, args)
             "billboard" -> billboard(player, text, label, args)
             "size" -> size(player, text, label, args)
         }
@@ -86,6 +86,14 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
         success(player, "line-edited", linePlaceholder(index + 1))
     }
 
+    private fun shadow(player: Player, text: BiteText, label: String, args: List<String>) {
+        val shadow = parseToggle(player, label, "shadow", args) ?: return
+
+        text.shadow = shadow
+        EntityManager.updateEntity(text)
+        success(player, if (shadow) "shadow-on" else "shadow-off")
+    }
+
     private fun billboard(player: Player, text: BiteText, label: String, args: List<String>) {
         val billboard = parseToggle(player, label, "billboard", args) ?: return
 
@@ -128,8 +136,8 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
                 2 -> hint(input, "<text>")
                 else -> emptyList()
             }
-            "glow" -> glowCompletions(args)
-            "billboard" -> toggleCompletions(args)
+            "cmd" -> commandCompletions(args)
+            "shadow", "billboard" -> toggleCompletions(args)
             "size" -> if (args.size == 1) hint(input, "<scale>") else emptyList()
             else -> emptyList()
         }

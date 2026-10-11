@@ -104,7 +104,8 @@ class InfoSubCommand : SubCommand("info", Permissions.MANAGE) {
             is BiteText -> {
                 field(player, "size", number(entity.scale.x))
                 field(player, "background", entity.backgroundColor ?: info("default"))
-                field(player, "glow", entity.glowColor ?: none)
+                command(player, entity.command)
+                field(player, "shadow", yesNo(entity.shadow))
                 field(player, "billboard", yesNo(entity.billboard))
                 field(player, "lines", entity.lines.size.toString())
                 entity.lines.forEachIndexed { i, text ->
