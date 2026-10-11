@@ -15,13 +15,21 @@ selection:
   # How far away /bd select reaches, in blocks
   range: 5.0
 
-# Names, descriptions, and text lines support MiniMessage (<#FF0368>, <gradient:#FF0368:#4ECDC4>, <bold>).
+clicks:
+  # Ticks a player waits between clicks on NPCs and displays (20 ticks = 1 second). 0 turns the cooldown off.
+  cooldown: 0
+
+# Names, descriptions, and text lines support MiniMessage (<#FF0368>, <gradient:#FF0368:#4ECDC4>, <bold>)
+# and legacy codes (&a, &l, &#FF0368).
 # Run /bd reload after editing.
 text:
   # The first line of a new text display when you don't give one
   default-line: "Text Display"
-  # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity)
-  default-background: "#64000000"
+  # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity).
+  # #40000000 is vanilla's. /bd text background none puts a display back on this one.
+  default-background: "#40000000"
+  # Whether new text displays turn to face players. Change one later with /bd text billboard
+  default-billboard: true
 
 animations:
   # Item displays with /bd item bouncing true

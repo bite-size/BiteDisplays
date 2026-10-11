@@ -19,12 +19,42 @@ object FormatManager {
 
     private var prefix: Component = Component.empty()
 
+    // &x&F&F&0&3&6&8 (Bungee hex), &#FF0368, and single codes like &a or &l, with & or §
+    private val legacyRepeatedHex = Regex("[&§][xX]((?:[&§][0-9a-fA-F]){6})")
+    private val legacyHex = Regex("[&§]#([0-9a-fA-F]{6})")
+    private val legacyCode = Regex("[&§]([0-9a-fA-Fk-oK-OrR])")
+
+    // A legacy color also clears bold, italic, and the rest, so colors start with <reset>
+    private val legacyTags = mapOf(
+        '0' to "<reset><black>", '1' to "<reset><dark_blue>", '2' to "<reset><dark_green>", '3' to "<reset><dark_aqua>",
+        '4' to "<reset><dark_red>", '5' to "<reset><dark_purple>", '6' to "<reset><gold>", '7' to "<reset><gray>",
+        '8' to "<reset><dark_gray>", '9' to "<reset><blue>", 'a' to "<reset><green>", 'b' to "<reset><aqua>",
+        'c' to "<reset><red>", 'd' to "<reset><light_purple>", 'e' to "<reset><yellow>", 'f' to "<reset><white>",
+        'k' to "<obfuscated>", 'l' to "<bold>", 'm' to "<strikethrough>", 'n' to "<underlined>", 'o' to "<italic>",
+        'r' to "<reset>",
+    )
+
     fun reload() {
         prefix = parseMiniMessage(ConfigManager.getPrefix())
     }
 
+    /** Turns legacy codes (&a, &l, &#FF0368, &x&F&F...) into MiniMessage tags, so players can type either. */
+    fun legacyToMiniMessage(text: String): String {
+        if ('&' !in text && '§' !in text) return text
+
+        return text
+            .replace(legacyRepeatedHex) { "<reset><#${it.groupValues[1].filter { c -> c != '&' && c != '§' }}>" }
+            .replace(legacyHex) { "<reset><#${it.groupValues[1]}>" }
+            .replace(legacyCode) { legacyTags.getValue(it.groupValues[1].lowercase()[0]) }
+    }
+
+    /** The text without any formatting, to estimate how much space it takes up. */
+    fun stripFormatting(text: String): String {
+        return miniMessage.stripTags(legacyToMiniMessage(text))
+    }
+
     fun parseMiniMessage(text: String, vararg placeholders: TagResolver): Component {
-        return miniMessage.deserialize(text, *placeholders)
+        return miniMessage.deserialize(legacyToMiniMessage(text), *placeholders)
     }
 
     fun toLegacy(component: Component): String {

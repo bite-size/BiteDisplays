@@ -6,6 +6,7 @@ import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.managers.FormatManager
 import gg.bitesize.displays.models.BiteEntity
 import gg.bitesize.displays.models.BiteType
+import gg.bitesize.displays.models.CommandRunner
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import org.bukkit.Location
@@ -78,7 +79,25 @@ abstract class SubCommand(
 
     /** `<type>` and `<id>` of an entity. */
     protected fun entityPlaceholders(entity: BiteEntity): TagResolver {
-        return TagResolver.resolver(typePlaceholder(entity.type), Placeholder.unparsed("id", entity.shortId))
+        return TagResolver.resolver(typePlaceholder(entity.type), Placeholder.unparsed("id", entity.displayId))
+    }
+
+    /**
+     * Text a player typed, formatted the way it shows in the world: MiniMessage or legacy codes.
+     * Inserted as a finished component, so its tags can't spill into the rest of the message.
+     */
+    protected fun styledPlaceholder(key: String, text: String): TagResolver {
+        return Placeholder.component(key, FormatManager.parseMiniMessage(text))
+    }
+
+    /** `<runner>`: who runs a click command, from the runners section of messages.yml. */
+    protected fun runnerPlaceholder(runner: CommandRunner): TagResolver {
+        return Placeholder.parsed("runner", ConfigManager.getMessage("runners.${runner.key}"))
+    }
+
+    /** Every entity ID, sorted by type and then number, for tab completion. */
+    protected fun entityIds(): List<String> {
+        return EntityManager.getAll().sortedWith(compareBy({ it.type }, { it.number })).map { it.displayId }
     }
 
     /** `<world>`, `<x>`, `<y>`, and `<z>` of a block position. */

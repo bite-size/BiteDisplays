@@ -5,7 +5,11 @@ import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.managers.FormatManager
 import gg.bitesize.displays.models.BiteEntity
 import gg.bitesize.displays.models.BiteType
+import gg.bitesize.displays.models.ClickCommand
+import gg.bitesize.displays.models.CommandRunner
+import gg.bitesize.displays.util.Colors
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
+import org.bukkit.Location
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.joml.Vector3f
@@ -24,6 +28,8 @@ abstract class EntitySubCommand<T : BiteEntity>(
 ) : SubCommand(type.key, permission, feature = type, playerOnly = true) {
 
     private val booleans = listOf("true", "false")
+    private val runners = CommandRunner.entries.map { it.key }
+    private val glowOptions = listOf(NO_GLOW) + Colors.GLOW_COLORS
 
     final override fun execute(sender: CommandSender, label: String, args: List<String>) {
         when (val action = args.firstOrNull()?.lowercase(Locale.ROOT)) {
@@ -70,6 +76,12 @@ abstract class EntitySubCommand<T : BiteEntity>(
         return EntityManager.getSelection(player.uniqueId)?.takeIf { it.type == type } as T?
     }
 
+    /** The next number for a new entity of this type. */
+    protected fun nextNumber(): Int = EntityManager.nextNumber(type)
+
+    /** Where a new entity goes: exactly where the player stands, level. */
+    protected fun spawnLocation(player: Player): Location = EntityManager.placement(type, player.location)
+
     /** Spawns a new entity where the player stands and selects it. */
     protected fun spawnAndSelect(player: Player, entity: T) {
         if (EntityManager.spawn(entity) == null) {
@@ -109,12 +121,61 @@ abstract class EntitySubCommand<T : BiteEntity>(
         return if (args.size == 1) matching(args[0], booleans) else emptyList()
     }
 
+    /**
+     * `glow [color]`, the same for every type: no color or `none` turns the glow off.
+     * [isValid] decides which colors this type can show, and [invalidKey] is the error otherwise.
+     */
+    protected fun glow(player: Player, args: List<String>, isValid: (String) -> Boolean, invalidKey: String,
+                       apply: (String?) -> Unit) {
+        val color = args.firstOrNull()?.lowercase(Locale.ROOT)
+        if (color == null || color == NO_GLOW) {
+            apply(null)
+            success(player, "glow-removed")
+            return
+        }
+
+        if (!isValid(color)) return error(player, invalidKey)
+
+        apply(color)
+        success(player, "glow-set", Placeholder.unparsed("color", color))
+    }
+
+    protected fun glowCompletions(args: List<String>): List<String> {
+        return if (args.size == 1) matching(args[0], glowOptions) else emptyList()
+    }
+
+    /** `cmd <console|player> <command>`, the same for every type: no arguments removes the command. */
+    protected fun command(player: Player, label: String, args: List<String>, apply: (ClickCommand?) -> Unit) {
+        if (args.isEmpty()) {
+            apply(null)
+            success(player, "command-removed")
+            return
+        }
+
+        val runner = CommandRunner.fromKey(args[0])
+        if (runner == null || args.size < 2) return sendActionUsage(player, label, "cmd")
+
+        val click = ClickCommand(runner, args.drop(1).joinToString(" "))
+        apply(click)
+        success(player, "command-set", Placeholder.unparsed("command", click.command), runnerPlaceholder(runner))
+    }
+
+    protected fun commandCompletions(args: List<String>): List<String> = when (args.size) {
+        1 -> matching(args[0], runners)
+        2 -> hint(args[1], "<command>")
+        else -> emptyList()
+    }
+
     private fun sendActionHelp(sender: CommandSender, label: String) {
         val labelPlaceholder = labelPlaceholder(label)
 
         FormatManager.send(sender, ConfigManager.getMessage("help.$name-header"), true, labelPlaceholder)
         actions.forEach { FormatManager.send(sender, ConfigManager.getMessage("help.$name-$it"), false, labelPlaceholder) }
         FormatManager.send(sender, ConfigManager.getMessage("help.optional-note"), false, labelPlaceholder)
+    }
+
+    private companion object {
+        const val NO_GLOW = "none"
     }
 
 }

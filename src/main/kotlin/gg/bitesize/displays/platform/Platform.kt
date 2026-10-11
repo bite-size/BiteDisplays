@@ -24,7 +24,7 @@ interface Platform {
 
     fun setText(display: TextDisplay, text: String)
 
-    /** Sets the line below a mannequin's name, or restores the default label (null). */
+    /** Sets the line below a mannequin's name, or hides it (null). */
     fun setDescription(mannequin: Mannequin, text: String?)
 
     fun setSkin(mannequin: Mannequin, skin: Skin)

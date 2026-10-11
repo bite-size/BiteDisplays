@@ -19,7 +19,7 @@ class ItemDisplaySubCommand : DisplaySubCommand<BiteItem>(
     override fun create(player: Player, held: ItemStack): BiteItem? {
         if (held.type.isAir) return null.also { error(player, "no-item") }
 
-        return BiteItem(id = UUID.randomUUID(), location = player.location, itemStack = held.clone())
+        return BiteItem(id = UUID.randomUUID(), number = nextNumber(), location = spawnLocation(player), itemStack = held.clone())
     }
 
     override fun execute(player: Player, display: BiteItem, action: String, label: String, args: List<String>) {
@@ -44,7 +44,7 @@ class BlockDisplaySubCommand : DisplaySubCommand<BiteBlock>(BiteType.BLOCK, Perm
         // Air counts as a block, so it's ruled out first
         if (held.type.isAir || !held.type.isBlock) return null.also { error(player, "no-block") }
 
-        return BiteBlock(id = UUID.randomUUID(), location = player.location, itemStack = held.clone())
+        return BiteBlock(id = UUID.randomUUID(), number = nextNumber(), location = spawnLocation(player), itemStack = held.clone())
     }
 
 }

@@ -9,7 +9,6 @@ import gg.bitesize.displays.util.Colors
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import java.util.Locale
 import java.util.UUID
 
 class TextDisplaySubCommand : EntitySubCommand<BiteText>(
@@ -23,11 +22,15 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
         val text = selected(player, label) ?: return
 
         when (action) {
-            "background" -> background(player, text, label, args)
+            "background" -> background(player, text, args)
             "addline" -> addLine(player, text, label, args)
             "delline" -> deleteLine(player, text, label, args)
             "editline" -> editLine(player, text, label, args)
-            "glow" -> glow(player, text, args)
+            // Displays glow in any color, named or hex
+            "glow" -> glow(player, args, { Colors.parse(it) != null }, "invalid-glow-color") {
+                text.glowColor = it
+                EntityManager.updateEntity(text)
+            }
             "billboard" -> billboard(player, text, label, args)
             "size" -> size(player, text, label, args)
         }
@@ -36,11 +39,20 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
     private fun create(player: Player, args: List<String>) {
         val firstLine = if (args.isEmpty()) settings.defaultTextLine else args.joinToString(" ")
 
-        spawnAndSelect(player, BiteText(id = UUID.randomUUID(), location = player.location, lines = mutableListOf(firstLine)))
+        spawnAndSelect(player, BiteText(id = UUID.randomUUID(), number = nextNumber(), location = spawnLocation(player),
+            lines = mutableListOf(firstLine), billboard = settings.defaultTextBillboard))
     }
 
-    private fun background(player: Player, text: BiteText, label: String, args: List<String>) {
-        val color = args.firstOrNull() ?: return sendActionUsage(player, label, "background")
+    private fun background(player: Player, text: BiteText, args: List<String>) {
+        // No color or none goes back to text.default-background, like a new display
+        val color = args.firstOrNull()
+        if (color == null || color.equals(NO_BACKGROUND, ignoreCase = true)) {
+            text.backgroundColor = null
+            EntityManager.updateEntity(text)
+            success(player, "background-removed")
+            return
+        }
+
         if (Colors.parseHex(color) == null) return error(player, "invalid-color")
 
         text.backgroundColor = color
@@ -72,22 +84,6 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
         text.lines[index] = args.drop(1).joinToString(" ")
         EntityManager.updateEntity(text)
         success(player, "line-edited", linePlaceholder(index + 1))
-    }
-
-    private fun glow(player: Player, text: BiteText, args: List<String>) {
-        if (args.isEmpty()) {
-            text.glowColor = null
-            EntityManager.updateEntity(text)
-            success(player, "glow-removed")
-            return
-        }
-
-        val color = args[0].lowercase(Locale.ROOT)
-        if (Colors.parse(color) == null) return error(player, "invalid-glow-color")
-
-        text.glowColor = color
-        EntityManager.updateEntity(text)
-        success(player, "glow-set", Placeholder.unparsed("color", color))
     }
 
     private fun billboard(player: Player, text: BiteText, label: String, args: List<String>) {
@@ -124,7 +120,7 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
 
         return when (action) {
             "create" -> if (args.size == 1) hint(input, "[text]") else emptyList()
-            "background" -> if (args.size == 1) hint(input, "<#AARRGGBB>") else emptyList()
+            "background" -> if (args.size == 1) matching(input, listOf(NO_BACKGROUND)) + hint(input, "[#AARRGGBB]") else emptyList()
             "addline" -> if (args.size == 1) hint(input, "<text>") else emptyList()
             "delline" -> if (args.size == 1) matching(input, lineNumbers()) else emptyList()
             "editline" -> when (args.size) {
@@ -132,11 +128,15 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
                 2 -> hint(input, "<text>")
                 else -> emptyList()
             }
-            "glow" -> if (args.size == 1) matching(input, Colors.GLOW_COLORS) else emptyList()
+            "glow" -> glowCompletions(args)
             "billboard" -> toggleCompletions(args)
             "size" -> if (args.size == 1) hint(input, "<scale>") else emptyList()
             else -> emptyList()
         }
+    }
+
+    private companion object {
+        const val NO_BACKGROUND = "none"
     }
 
 }

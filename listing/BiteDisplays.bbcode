@@ -6,10 +6,10 @@ Your spawn deserves more than signs. BiteDisplays lets you place NPCs with real 
 
 [SIZE=5][B][COLOR=#FF0368]▸ Key Features[/COLOR][/B][/SIZE]
 [LIST]
-[*][B][COLOR=#4ECDC4]Four Entity Types:[/COLOR][/B] NPCs with skins and equipment, multi-line text displays, and item and block displays.
-[*][B][COLOR=#4ECDC4]Click Actions:[/COLOR][/B] NPCs and item and block displays run a command when right-clicked, with {player} filled in. NPCs can play a sound too.
-[*][B][COLOR=#4ECDC4]Modern Formatting:[/COLOR][/B] MiniMessage gradients, HEX colors, and decorations in every name and line.
-[*][B][COLOR=#4ECDC4]Point & Edit:[/COLOR][/B] New entities are selected for you. Look at any other one to select it, then move, inspect, or remove it.
+[*][B][COLOR=#4ECDC4]Four Entity Types:[/COLOR][/B] NPCs with skins, equipment, and any size, multi-line text displays, and item and block displays.
+[*][B][COLOR=#4ECDC4]Click Actions:[/COLOR][/B] NPCs and item and block displays run a command when right-clicked, as the console or the player, with @p filled in. NPCs can play a sound too.
+[*][B][COLOR=#4ECDC4]Modern Formatting:[/COLOR][/B] MiniMessage gradients, HEX colors, and decorations in every name and line. Classic & codes work too.
+[*][B][COLOR=#4ECDC4]Point & Edit:[/COLOR][/B] New entities are selected for you. Look at any other one, or click [SELECT] in the list, then move, inspect, or remove it.
 [*][B][COLOR=#4ECDC4]Spigot, Paper & Purpur:[/COLOR][/B] One jar that runs on all three, tested on each.
 [/LIST]
 
@@ -21,6 +21,7 @@ Names, descriptions, and text lines all understand MiniMessage.
 [*][B]<#FF0368>Magenta[/B] - HEX colors.
 [*][B]<gradient:#FF0368:#4ECDC4>Bitesize</gradient>[/B] - Smooth gradients (rainbows too).
 [*][B]<bold>[/B], [B]<italic>[/B], [B]<underlined>[/B], [B]<strikethrough>[/B] - Decorations.
+[*][B]&a[/B], [B]&l[/B], [B]&#FF0368[/B] - Classic color codes.
 [/LIST]
 
 On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
@@ -28,8 +29,9 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 [SIZE=5][B][COLOR=#FF0368]▸ Additional Features[/COLOR][/B][/SIZE]
 [LIST]
 [*]Every single message is completely configurable in the messages.yml.
-[*]Smart TAB completion suggests actions, glow colors, every game sound, online players for skins, and the lines on your selected text display.
+[*]Smart TAB completion suggests actions, glow colors, every game sound, online players for skins, entity IDs, and the lines on your selected text display.
 [*]An equipment menu to dress your NPCs in any armor and held items.
+[*]NPCs that can't be hurt, even by players in creative mode.
 [*]Bouncing item displays, glowing in any color, and text that turns to face players.
 [*]Turn NPCs, item, block, or text displays on or off individually.
 [*]Lightweight: entities are vanilla mannequins and displays, saved to one file and respawned as their chunks load.
@@ -41,8 +43,9 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 [*][B][COLOR=#4ECDC4]/bd npc skin <player>[/COLOR][/B] - Use a player's skin
 [*][B][COLOR=#4ECDC4]/bd npc name [name][/COLOR][/B] - Set the name
 [*][B][COLOR=#4ECDC4]/bd npc desc [text][/COLOR][/B] - Set the line under the name
+[*][B][COLOR=#4ECDC4]/bd npc size <scale>[/COLOR][/B] - Scale the NPC
 [*][B][COLOR=#4ECDC4]/bd npc glow [color][/COLOR][/B] - Glow in a color
-[*][B][COLOR=#4ECDC4]/bd npc cmd [command][/COLOR][/B] - Run a command on right-click
+[*][B][COLOR=#4ECDC4]/bd npc cmd [<console|player> <command>][/COLOR][/B] - Run a command on right-click
 [*][B][COLOR=#4ECDC4]/bd npc sound [sound][/COLOR][/B] - Play a sound on right-click
 [*][B][COLOR=#4ECDC4]/bd npc equipment[/COLOR][/B] - Open the equipment menu
 [/LIST]
@@ -53,9 +56,9 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 [*][B][COLOR=#4ECDC4]/bd text addline <text>[/COLOR][/B] - Add a line
 [*][B][COLOR=#4ECDC4]/bd text editline <line> <text>[/COLOR][/B] - Replace a line
 [*][B][COLOR=#4ECDC4]/bd text delline <line>[/COLOR][/B] - Remove a line
-[*][B][COLOR=#4ECDC4]/bd text background <hex>[/COLOR][/B] - Set the background color
+[*][B][COLOR=#4ECDC4]/bd text background [hex][/COLOR][/B] - Set the background color
 [*][B][COLOR=#4ECDC4]/bd text glow [color][/COLOR][/B] - Glow in a color name or HEX color
-[*][B][COLOR=#4ECDC4]/bd text billboard <true|false>[/COLOR][/B] - Turn to face players
+[*][B][COLOR=#4ECDC4]/bd text billboard <true|false>[/COLOR][/B] - Turn to face players (on by default)
 [*][B][COLOR=#4ECDC4]/bd text size <scale>[/COLOR][/B] - Scale the text
 [/LIST]
 
@@ -65,20 +68,20 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 [*][B][COLOR=#4ECDC4]/bd <item|block> rotate <yaw|pitch> <degrees>[/COLOR][/B] - Rotate it
 [*][B][COLOR=#4ECDC4]/bd <item|block> size <scale>[/COLOR][/B] - Scale it
 [*][B][COLOR=#4ECDC4]/bd <item|block> name [name][/COLOR][/B] - Show a name above it
-[*][B][COLOR=#4ECDC4]/bd <item|block> cmd [command][/COLOR][/B] - Run a command on right-click
-[*][B][COLOR=#4ECDC4]/bd <item|block> glowing <true|false>[/COLOR][/B] - Make it glow
+[*][B][COLOR=#4ECDC4]/bd <item|block> cmd [<console|player> <command>][/COLOR][/B] - Run a command on right-click
+[*][B][COLOR=#4ECDC4]/bd <item|block> glow [color][/COLOR][/B] - Glow in a color name or HEX color
 [*][B][COLOR=#4ECDC4]/bd item bouncing <true|false>[/COLOR][/B] - Bob the item up and down
 [/LIST]
 
-Leave out a [value] to remove it.
+Leave out a [value] to remove it. In commands, @p is the player who clicked.
 
 [SIZE=5][B][COLOR=#FF0368]▸ Managing Entities & Permissions[/COLOR][/B][/SIZE]
 [LIST]
-[*][B][COLOR=#4ECDC4]/bd select[/COLOR][/B] - Select the entity you're looking at [I](bitedisplays.manage)[/I]
+[*][B][COLOR=#4ECDC4]/bd select [id][/COLOR][/B] - Select the entity you're looking at, or by ID like npc-1 [I](bitedisplays.manage)[/I]
 [*][B][COLOR=#4ECDC4]/bd movehere[/COLOR][/B] - Move your selection to you [I](bitedisplays.manage)[/I]
 [*][B][COLOR=#4ECDC4]/bd remove[/COLOR][/B] - Remove your selection [I](bitedisplays.manage)[/I]
 [*][B][COLOR=#4ECDC4]/bd info[/COLOR][/B] - Show your selection's details [I](bitedisplays.manage)[/I]
-[*][B][COLOR=#4ECDC4]/bd list [type][/COLOR][/B] - List every entity, or one type [I](bitedisplays.manage)[/I]
+[*][B][COLOR=#4ECDC4]/bd list [type][/COLOR][/B] - List every entity with a [SELECT] button, or one type [I](bitedisplays.manage)[/I]
 [*][B][COLOR=#4ECDC4]/bd save[/COLOR][/B] / [B][COLOR=#4ECDC4]/bd reload[/COLOR][/B] - Save entities / reload config & messages [I](bitedisplays.admin)[/I]
 [*][B]bitedisplays.npc, .text, .item, .block[/B] - Each entity type's commands.
 [*][B]bitedisplays.*[/B] - Every BiteDisplays permission.
@@ -90,7 +93,8 @@ All permissions default to op. [I]Every command also works as /bitedisplays.[/I]
 [LIST]
 [*][B][COLOR=#4ECDC4]Features:[/COLOR][/B] Toggle NPCs, item, block, and text displays individually.
 [*][B][COLOR=#4ECDC4]Selection:[/COLOR][/B] How far away /bd select reaches.
-[*][B][COLOR=#4ECDC4]Text:[/COLOR][/B] The default first line and background of new text displays.
+[*][B][COLOR=#4ECDC4]Clicks:[/COLOR][/B] An optional cooldown between clicks, off by default.
+[*][B][COLOR=#4ECDC4]Text:[/COLOR][/B] The default first line, background, and billboard of new text displays.
 [*][B][COLOR=#4ECDC4]Animations:[/COLOR][/B] The height, speed, and smoothness of bouncing items.
 [/LIST]
 
@@ -104,9 +108,13 @@ All permissions default to op. [I]Every command also works as /bitedisplays.[/I]
 selection:
   range: 5.0
 
+clicks:
+  cooldown: 0   # ticks
+
 text:
   default-line: "Text Display"
-  default-background: "#64000000"
+  default-background: "#40000000"
+  default-billboard: true
 
 animations:
   bounce:
@@ -116,7 +124,7 @@ animations:
 [/SPOILER]
 
 [SIZE=5][B][COLOR=#FF0368]▸ Messages[/COLOR][/B][/SIZE]
-Every message lives in messages.yml, grouped into errors, messages, help, info, and gui, with full MiniMessage support. Set your own prefix and error prefix, rename the entity types, and use variables like <type>, <id>, <name>, <command>, and <line>.
+Every message lives in messages.yml, grouped into errors, messages, help, info, and gui, with full MiniMessage and & code support. Set your own prefix and error prefix, rename the entity types, and use variables like <type>, <id>, <name>, <command>, and <line>.
 New messages added in updates are filled in automatically, so you never have to regenerate the file.
 
 [SIZE=5][B][COLOR=#FF0368]▸ Compatibility[/COLOR][/B][/SIZE]

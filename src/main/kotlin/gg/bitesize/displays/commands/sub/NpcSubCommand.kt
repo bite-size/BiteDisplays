@@ -19,7 +19,7 @@ import java.util.UUID
 
 class NpcSubCommand : EntitySubCommand<BiteNpc>(
     BiteType.NPC, Permissions.NPC,
-    listOf("create", "skin", "cmd", "name", "glow", "desc", "equipment", "sound"),
+    listOf("create", "skin", "cmd", "name", "glow", "desc", "size", "equipment", "sound"),
 ) {
 
     // The sound registry doesn't change while the server runs. getKey() is deprecated on Spigot,
@@ -34,10 +34,16 @@ class NpcSubCommand : EntitySubCommand<BiteNpc>(
 
         when (action) {
             "skin" -> skin(player, npc, label, args)
-            "cmd" -> command(player, npc, args)
+            // The command only matters on click, so the entity itself doesn't change
+            "cmd" -> command(player, label, args) { npc.command = it }
             "name" -> name(player, npc, args)
-            "glow" -> glow(player, npc, args)
+            // NPCs glow through scoreboard teams, which only know the named chat colors
+            "glow" -> glow(player, args, { Colors.teamColor(it) != null }, "invalid-team-color") {
+                npc.glowColor = it
+                EntityManager.updateEntity(npc)
+            }
             "desc" -> description(player, npc, args)
+            "size" -> size(player, npc, label, args)
             "equipment" -> EquipmentGui.open(player, npc)
             "sound" -> sound(player, npc, args)
         }
@@ -46,7 +52,8 @@ class NpcSubCommand : EntitySubCommand<BiteNpc>(
     private fun create(player: Player, label: String, args: List<String>) {
         if (args.isEmpty()) return sendActionUsage(player, label, "create")
 
-        spawnAndSelect(player, BiteNpc(id = UUID.randomUUID(), location = player.location, name = args.joinToString(" ")))
+        spawnAndSelect(player, BiteNpc(
+            id = UUID.randomUUID(), number = nextNumber(), location = spawnLocation(player), name = args.joinToString(" ")))
     }
 
     private fun skin(player: Player, npc: BiteNpc, label: String, args: List<String>) {
@@ -72,18 +79,6 @@ class NpcSubCommand : EntitySubCommand<BiteNpc>(
         })
     }
 
-    private fun command(player: Player, npc: BiteNpc, args: List<String>) {
-        if (args.isEmpty()) {
-            npc.command = null
-            success(player, "command-removed")
-            return
-        }
-
-        val command = args.joinToString(" ")
-        npc.command = command
-        success(player, "command-set", Placeholder.unparsed("command", command))
-    }
-
     private fun name(player: Player, npc: BiteNpc, args: List<String>) {
         if (args.isEmpty()) {
             npc.name = null
@@ -95,24 +90,7 @@ class NpcSubCommand : EntitySubCommand<BiteNpc>(
         val name = args.joinToString(" ")
         npc.name = name
         EntityManager.updateEntity(npc)
-        success(player, "name-set", Placeholder.parsed("name", name))
-    }
-
-    private fun glow(player: Player, npc: BiteNpc, args: List<String>) {
-        if (args.isEmpty()) {
-            npc.glowColor = null
-            EntityManager.updateEntity(npc)
-            success(player, "glow-removed")
-            return
-        }
-
-        // NPCs glow through scoreboard teams, which only know the named chat colors
-        val color = args[0].lowercase(Locale.ROOT)
-        if (Colors.teamColor(color) == null) return error(player, "invalid-team-color")
-
-        npc.glowColor = color
-        EntityManager.updateEntity(npc)
-        success(player, "glow-set", Placeholder.unparsed("color", color))
+        success(player, "name-set", styledPlaceholder("name", name))
     }
 
     private fun description(player: Player, npc: BiteNpc, args: List<String>) {
@@ -126,7 +104,18 @@ class NpcSubCommand : EntitySubCommand<BiteNpc>(
         val description = args.joinToString(" ")
         npc.description = description
         EntityManager.updateEntity(npc)
-        success(player, "description-set", Placeholder.parsed("description", description))
+        success(player, "description-set", styledPlaceholder("description", description))
+    }
+
+    private fun size(player: Player, npc: BiteNpc, label: String, args: List<String>) {
+        val input = args.firstOrNull() ?: return sendActionUsage(player, label, "size")
+        val size = input.toDoubleOrNull()?.takeIf { it in BiteNpc.MIN_SCALE..BiteNpc.MAX_SCALE }
+            ?: return error(player, "invalid-npc-size",
+                Placeholder.unparsed("min", number(BiteNpc.MIN_SCALE)), Placeholder.unparsed("max", number(BiteNpc.MAX_SCALE)))
+
+        npc.scale = size
+        EntityManager.updateEntity(npc)
+        success(player, "size-set", Placeholder.unparsed("size", number(size)))
     }
 
     private fun sound(player: Player, npc: BiteNpc, args: List<String>) {
@@ -144,16 +133,20 @@ class NpcSubCommand : EntitySubCommand<BiteNpc>(
     }
 
     override fun tabComplete(sender: CommandSender, action: String, args: List<String>): List<String> {
+        when (action) {
+            "cmd" -> return commandCompletions(args)
+            "glow" -> return glowCompletions(args)
+        }
+
         if (args.size != 1) return emptyList()
         val input = args[0]
 
         return when (action) {
             "create" -> hint(input, "<name>")
             "skin" -> matching(input, Bukkit.getOnlinePlayers().map { it.name })
-            "cmd" -> hint(input, "[command]")
             "name" -> hint(input, "[name]")
-            "glow" -> matching(input, Colors.GLOW_COLORS)
             "desc" -> hint(input, "[text]")
+            "size" -> hint(input, "<scale>")
             "sound" -> soundKeys.filter { it.contains(input, ignoreCase = true) }
             else -> emptyList()
         }
