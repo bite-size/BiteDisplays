@@ -45,9 +45,9 @@ class ListSubCommand : SubCommand("list", Permissions.MANAGE, playerOnly = false
             if (sender is Player) {
                 sendWithButton(sender, label, entity, placeholders)
             } else {
-                // The console can't click, so it gets a plain bullet
+                // The console can't click, so the button is left out
                 FormatManager.send(sender, ConfigManager.getMessage("info.list-entry"), false,
-                    Placeholder.unparsed("select", "-"), *placeholders)
+                    Placeholder.unparsed("select", ""), *placeholders)
             }
         }
     }
@@ -84,9 +84,9 @@ class ListSubCommand : SubCommand("list", Permissions.MANAGE, playerOnly = false
         player.spigot().sendMessage(*parts.toTypedArray())
     }
 
-    /** `<details>`: an NPC's name, a display's material, or a text display's line count. */
+    /** `<details>`: an NPC's formatted name, a display's material, or a text display's line count. */
     private fun details(entity: BiteEntity): TagResolver = when (entity) {
-        is BiteNpc -> Placeholder.unparsed("details", entity.name ?: "")
+        is BiteNpc -> styledPlaceholder("details", entity.name ?: "")
         is BiteBlock -> Placeholder.unparsed("details", entity.itemStack.type.name.lowercase(Locale.ROOT))
         is BiteItem -> Placeholder.unparsed("details", entity.itemStack.type.name.lowercase(Locale.ROOT))
         is BiteText -> Placeholder.component("details", FormatManager.parseMiniMessage(

@@ -1,5 +1,6 @@
 package gg.bitesize.displays.listeners
 
+import gg.bitesize.displays.managers.ConfigManager
 import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.models.BiteDisplay
 import gg.bitesize.displays.models.BiteNpc
@@ -19,8 +20,6 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object EntityInteractListener : Listener {
 
-    // Swallows repeats of one click, like a lagging client or a protocol translator sending it twice
-    private const val CLICK_DEBOUNCE_MS = 200L
     private val lastClicks = ConcurrentHashMap<UUID, Long>()
 
     // @p alone, not a selector like @p[distance=..5]
@@ -39,7 +38,7 @@ object EntityInteractListener : Listener {
         if (event.hand != EquipmentSlot.HAND) return
 
         val player = event.player
-        if (!debounce(player)) return
+        if (!offCooldown(player)) return
 
         when (entity) {
             is BiteNpc -> {
@@ -55,11 +54,17 @@ object EntityInteractListener : Listener {
         lastClicks.remove(player.uniqueId)
     }
 
-    /** False if the player clicked a moment ago. */
-    private fun debounce(player: Player): Boolean {
+    /** False if the player's last click was within `clicks.cooldown`. Clicks during the cooldown don't extend it. */
+    private fun offCooldown(player: Player): Boolean {
+        val cooldownMillis = ConfigManager.settings.clickCooldown * 50 // ticks to milliseconds
+        if (cooldownMillis <= 0) return true
+
         val now = System.currentTimeMillis()
-        val last = lastClicks.put(player.uniqueId, now) ?: return true
-        return now - last >= CLICK_DEBOUNCE_MS
+        val last = lastClicks[player.uniqueId]
+        if (last != null && now - last < cooldownMillis) return false
+
+        lastClicks[player.uniqueId] = now
+        return true
     }
 
     private fun run(player: Player, click: ClickCommand) {

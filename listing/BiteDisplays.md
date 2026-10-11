@@ -60,7 +60,7 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 | `/bd text addline <text>` | Add a line |
 | `/bd text editline <line> <text>` | Replace a line |
 | `/bd text delline <line>` | Remove a line |
-| `/bd text background <hex>` | Set the background color |
+| `/bd text background [hex]` | Set the background color |
 | `/bd text glow [color]` | Glow in a color name or HEX color |
 | `/bd text billboard <true\|false>` | Turn to face players (on by default) |
 | `/bd text size <scale>` | Scale the text |
@@ -99,6 +99,7 @@ All permissions default to op. *Every command also works as `/bitedisplays`.*
 
 - **Features:** Toggle NPCs, item, block, and text displays individually.
 - **Selection:** How far away `/bd select` reaches.
+- **Clicks:** An optional cooldown between clicks, off by default.
 - **Text:** The default first line, background, and billboard of new text displays.
 - **Animations:** The height, speed, and smoothness of bouncing items.
 
@@ -115,9 +116,12 @@ features:
 selection:
   range: 5.0
 
+clicks:
+  cooldown: 0   # ticks
+
 text:
   default-line: "Text Display"
-  default-background: "#64000000"
+  default-background: "#40000000"
   default-billboard: true
 
 animations:

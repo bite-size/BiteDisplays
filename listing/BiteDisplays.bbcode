@@ -56,7 +56,7 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts.
 [*][B][COLOR=#4ECDC4]/bd text addline <text>[/COLOR][/B] - Add a line
 [*][B][COLOR=#4ECDC4]/bd text editline <line> <text>[/COLOR][/B] - Replace a line
 [*][B][COLOR=#4ECDC4]/bd text delline <line>[/COLOR][/B] - Remove a line
-[*][B][COLOR=#4ECDC4]/bd text background <hex>[/COLOR][/B] - Set the background color
+[*][B][COLOR=#4ECDC4]/bd text background [hex][/COLOR][/B] - Set the background color
 [*][B][COLOR=#4ECDC4]/bd text glow [color][/COLOR][/B] - Glow in a color name or HEX color
 [*][B][COLOR=#4ECDC4]/bd text billboard <true|false>[/COLOR][/B] - Turn to face players (on by default)
 [*][B][COLOR=#4ECDC4]/bd text size <scale>[/COLOR][/B] - Scale the text
@@ -93,6 +93,7 @@ All permissions default to op. [I]Every command also works as /bitedisplays.[/I]
 [LIST]
 [*][B][COLOR=#4ECDC4]Features:[/COLOR][/B] Toggle NPCs, item, block, and text displays individually.
 [*][B][COLOR=#4ECDC4]Selection:[/COLOR][/B] How far away /bd select reaches.
+[*][B][COLOR=#4ECDC4]Clicks:[/COLOR][/B] An optional cooldown between clicks, off by default.
 [*][B][COLOR=#4ECDC4]Text:[/COLOR][/B] The default first line, background, and billboard of new text displays.
 [*][B][COLOR=#4ECDC4]Animations:[/COLOR][/B] The height, speed, and smoothness of bouncing items.
 [/LIST]
@@ -107,9 +108,12 @@ All permissions default to op. [I]Every command also works as /bitedisplays.[/I]
 selection:
   range: 5.0
 
+clicks:
+  cooldown: 0   # ticks
+
 text:
   default-line: "Text Display"
-  default-background: "#64000000"
+  default-background: "#40000000"
   default-billboard: true
 
 animations:

@@ -25,7 +25,7 @@ error-prefix: '<#F7567C>!! '
 # - <count> = number of entities (or lines, in info.list-lines).
 # - <range> = selection range in blocks.
 # - <world>, <x>, <y>, <z> = entity location.
-# - <select> = the info.list-select button (a dash in the console).
+# - <select> = the info.list-select button (left out in the console).
 # - <value>, <details>, <yaw>, <pitch> = entity details in the info section.
 
 types:
@@ -58,7 +58,6 @@ errors:
   usage-block-size: '<#F7567C>Usage: /<label> block size <scale>'
   usage-block-cmd: '<#F7567C>Usage: /<label> block cmd <console|player> <command>'
   usage-text: '<#F7567C>Usage: /<label> text <create|background|addline|delline|editline|glow|billboard|size>'
-  usage-text-background: '<#F7567C>Usage: /<label> text background <hex>'
   usage-text-addline: '<#F7567C>Usage: /<label> text addline <text>'
   usage-text-delline: '<#F7567C>Usage: /<label> text delline <line>'
   usage-text-editline: '<#F7567C>Usage: /<label> text editline <line> <text>'
@@ -76,7 +75,7 @@ errors:
   invalid-size: '<#F7567C>Size must be a positive number.'
   invalid-npc-size: '<#F7567C>NPC size must be from <#4ECDC4><min> <#F7567C>to <#4ECDC4><max><#F7567C>.'
   invalid-boolean: '<#F7567C>Use <#4ECDC4>true <#F7567C>or <#4ECDC4>false<#F7567C>.'
-  invalid-color: '<#F7567C>Use a hex color like <#4ECDC4>#FF0368<#F7567C>, or <#4ECDC4>#64000000 <#F7567C>with opacity.'
+  invalid-color: '<#F7567C>Use a hex color like <#4ECDC4>#FF0368<#F7567C>, <#4ECDC4>#80FF0368 <#F7567C>with opacity, or <#4ECDC4>none<#F7567C>.'
   invalid-glow-color: '<#F7567C>Use a color name like <#4ECDC4>red <#F7567C>or a hex color like <#4ECDC4>#FF0368<#F7567C>.'
   invalid-team-color: '<#F7567C>NPCs can only glow in color names like <#4ECDC4>red <#F7567C>or <#4ECDC4>aqua<#F7567C>.'
   invalid-line: "<#F7567C>That line doesn't exist. This display has <#4ECDC4><lines> <#F7567C>lines."
@@ -111,6 +110,7 @@ messages:
   billboard-on: '<#4ECDC4>The text now turns to face players.'
   billboard-off: '<#4ECDC4>The text now stays in place.'
   background-set: '<#4ECDC4>Background set to <#F7FFF7><color><#4ECDC4>.'
+  background-removed: '<#4ECDC4>Background reset to the default.'
   line-added: '<#4ECDC4>Added line <#F7FFF7><line><#4ECDC4>.'
   line-removed: '<#4ECDC4>Removed line <#F7FFF7><line><#4ECDC4>.'
   line-edited: '<#4ECDC4>Edited line <#F7FFF7><line><#4ECDC4>.'
@@ -156,7 +156,7 @@ help:
   block-glow: '<gray>- /<label> block glow [color]'
   text-header: '<#4ECDC4>--- Text Display Commands ---'
   text-create: '<gray>- /<label> text create [text]'
-  text-background: '<gray>- /<label> text background <hex>'
+  text-background: '<gray>- /<label> text background [hex]'
   text-addline: '<gray>- /<label> text addline <text>'
   text-delline: '<gray>- /<label> text delline <line>'
   text-editline: '<gray>- /<label> text editline <line> <text>'
@@ -183,7 +183,7 @@ info:
   lines: '<gray>- Lines: <#F7FFF7><value>'
   line: '<gray>  <line>. <#F7FFF7><value>'
   list-header: '<#4ECDC4>--- Entities (<#F7FFF7><count><#4ECDC4>) ---'
-  list-entry: '<gray><select> <#F7FFF7><type> <id><gray>: <details> <dark_gray>@ <world> (<x>, <y>, <z>)'
+  list-entry: '<gray> <#F7FFF7><type> <id><gray>: <details> <dark_gray>@ <world> (<x>, <y>, <z>) - <select>'
   list-select: '<#FF0368>[SELECT]'
   list-select-hover: '<gray>Click to select <#F7FFF7><id>'
   list-lines: '<count> lines'

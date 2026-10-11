@@ -82,9 +82,12 @@ abstract class SubCommand(
         return TagResolver.resolver(typePlaceholder(entity.type), Placeholder.unparsed("id", entity.displayId))
     }
 
-    /** Text a player typed, formatted the way it shows in the world: MiniMessage or legacy codes. */
+    /**
+     * Text a player typed, formatted the way it shows in the world: MiniMessage or legacy codes.
+     * Inserted as a finished component, so its tags can't spill into the rest of the message.
+     */
     protected fun styledPlaceholder(key: String, text: String): TagResolver {
-        return Placeholder.parsed(key, FormatManager.legacyToMiniMessage(text))
+        return Placeholder.component(key, FormatManager.parseMiniMessage(text))
     }
 
     /** `<runner>`: who runs a click command, from the runners section of messages.yml. */

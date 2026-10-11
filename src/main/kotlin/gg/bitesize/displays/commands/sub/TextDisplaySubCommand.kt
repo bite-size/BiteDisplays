@@ -22,7 +22,7 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
         val text = selected(player, label) ?: return
 
         when (action) {
-            "background" -> background(player, text, label, args)
+            "background" -> background(player, text, args)
             "addline" -> addLine(player, text, label, args)
             "delline" -> deleteLine(player, text, label, args)
             "editline" -> editLine(player, text, label, args)
@@ -43,8 +43,16 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
             lines = mutableListOf(firstLine), billboard = settings.defaultTextBillboard))
     }
 
-    private fun background(player: Player, text: BiteText, label: String, args: List<String>) {
-        val color = args.firstOrNull() ?: return sendActionUsage(player, label, "background")
+    private fun background(player: Player, text: BiteText, args: List<String>) {
+        // No color or none goes back to text.default-background, like a new display
+        val color = args.firstOrNull()
+        if (color == null || color.equals(NO_BACKGROUND, ignoreCase = true)) {
+            text.backgroundColor = null
+            EntityManager.updateEntity(text)
+            success(player, "background-removed")
+            return
+        }
+
         if (Colors.parseHex(color) == null) return error(player, "invalid-color")
 
         text.backgroundColor = color
@@ -112,7 +120,7 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
 
         return when (action) {
             "create" -> if (args.size == 1) hint(input, "[text]") else emptyList()
-            "background" -> if (args.size == 1) hint(input, "<#AARRGGBB>") else emptyList()
+            "background" -> if (args.size == 1) matching(input, listOf(NO_BACKGROUND)) + hint(input, "[#AARRGGBB]") else emptyList()
             "addline" -> if (args.size == 1) hint(input, "<text>") else emptyList()
             "delline" -> if (args.size == 1) matching(input, lineNumbers()) else emptyList()
             "editline" -> when (args.size) {
@@ -125,6 +133,10 @@ class TextDisplaySubCommand : EntitySubCommand<BiteText>(
             "size" -> if (args.size == 1) hint(input, "<scale>") else emptyList()
             else -> emptyList()
         }
+    }
+
+    private companion object {
+        const val NO_BACKGROUND = "none"
     }
 
 }

@@ -70,7 +70,7 @@ Leave out a `[value]` to remove it, like `/bd npc glow` to stop an NPC glowing (
 | `/bd text addline <text>` | Adds a line |
 | `/bd text editline <line> <text>` | Replaces a line |
 | `/bd text delline <line>` | Removes a line |
-| `/bd text background <hex>` | Sets the background, like `#FF0368` or `#64000000` with opacity |
+| `/bd text background [hex]` | Sets the background, like `#FF0368` or `#80FF0368` with opacity. Leave it out to go back to the default. |
 | `/bd text glow [color]` | Makes it glow in a color name or hex color |
 | `/bd text billboard <true\|false>` | Turns it to face players (on by default) |
 | `/bd text size <scale>` | Scales it |
@@ -134,12 +134,12 @@ On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts. Sp
 
 **Glow colors:** NPCs glow in the 16 color names (`red`, `aqua`, `gold`, ...). Text, item, and block displays also take hex colors like `#FF0368`. `none` turns the glow off.
 
-**Click commands** run as the console or as the player who clicked, with that player's own permissions. The `/` is optional, and `@p` becomes the name of the player who clicked.
+**Click commands** run as the console or as the player who clicked, with that player's own permissions. The `/` is optional, and `@p` becomes the name of the player who clicked. To stop players spamming them, set `clicks.cooldown` in config.yml.
 
 ## Configuration
 
 <details>
-<summary><b>config.yml</b>: features, selection, text defaults, and animations</summary>
+<summary><b>config.yml</b>: features, selection, click cooldown, text defaults, and animations</summary>
 
 ```yaml
 # Turn the commands for each entity type on or off. Entities already placed stay in the world.
@@ -153,11 +153,16 @@ selection:
   # How far away /bd select reaches, in blocks
   range: 5.0
 
+clicks:
+  # Ticks a player waits between clicks on NPCs and displays (20 ticks = 1 second). 0 turns the cooldown off.
+  cooldown: 0
+
 text:
   # The first line of a new text display when you don't give one
   default-line: "Text Display"
-  # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity)
-  default-background: "#64000000"
+  # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity).
+  # #40000000 is vanilla's. /bd text background none puts a display back on this one.
+  default-background: "#40000000"
   # Whether new text displays turn to face players. Change one later with /bd text billboard
   default-billboard: true
 
