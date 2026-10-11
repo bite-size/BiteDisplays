@@ -18,6 +18,9 @@ import gg.bitesize.displays.commands.sub.RemoveSubCommand
 import gg.bitesize.displays.commands.sub.RotateSubCommand
 import gg.bitesize.displays.commands.sub.SaveSubCommand
 import gg.bitesize.displays.commands.sub.SelectSubCommand
+import gg.bitesize.displays.commands.sub.SetBlockSubCommand
+import gg.bitesize.displays.commands.sub.SetItemSubCommand
+import gg.bitesize.displays.commands.sub.SetLocationSubCommand
 import gg.bitesize.displays.commands.sub.SizeSubCommand
 import gg.bitesize.displays.commands.sub.SkinSubCommand
 import gg.bitesize.displays.commands.sub.SoundSubCommand
@@ -42,6 +45,8 @@ class DisplaysCommand : BaseCommand("bitedisplays", aliases = listOf("bd")) {
     private val subCommands: Map<String, SubCommand> = listOf(
         CreateSubCommand(),
         NameSubCommand(),
+        SetBlockSubCommand(),
+        SetItemSubCommand(),
         DescriptionSubCommand(),
         AddLineSubCommand(),
         EditLineSubCommand(),
@@ -59,6 +64,7 @@ class DisplaysCommand : BaseCommand("bitedisplays", aliases = listOf("bd")) {
         SoundSubCommand(),
         SelectSubCommand(),
         MoveHereSubCommand(),
+        SetLocationSubCommand(),
         RemoveSubCommand(),
         InfoSubCommand(),
         ListSubCommand(),

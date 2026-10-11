@@ -27,6 +27,7 @@ error-prefix: '<#F7567C>!! '
 # - <count> = number of entities (or lines, in info.list-lines).
 # - <range> = selection range in blocks.
 # - <world>, <x>, <y>, <z> = entity location.
+# - <material> = the block or item a display shows.
 # - <select> = the info.list-select button (left out in the console).
 # - <value>, <details>, <yaw>, <pitch> = entity details in the info section.
 
@@ -57,7 +58,8 @@ errors:
   usage-help: '<#F7567C>Usage: /<label> help [npc|text|item|block]'
   usage-create: '<#F7567C>Usage: /<label> create <npc|text|item|block> [name]'
   usage-create-text: '<#F7567C>Usage: /<label> create text <text>'
-  usage-skin: '<#F7567C>Usage: /<label> skin <player>'
+  usage-setlocation: '<#F7567C>Usage: /<label> setlocation <x> <y> <z>'
+  usage-skin:'<#F7567C>Usage: /<label> skin <player>'
   usage-cmd: '<#F7567C>Usage: /<label> cmd <console|player> <command>'
   usage-size: '<#F7567C>Usage: /<label> size <scale>'
   usage-rotate: '<#F7567C>Usage: /<label> rotate <yaw|pitch> <degrees>'
@@ -81,7 +83,7 @@ errors:
   invalid-boolean: '<#F7567C>Use <#4ECDC4>true <#F7567C>or <#4ECDC4>false<#F7567C>.'
   invalid-color: '<#F7567C>Use a hex color like <#4ECDC4>#FF0368<#F7567C>, <#4ECDC4>#80FF0368 <#F7567C>with opacity, or <#4ECDC4>none<#F7567C>.'
   invalid-glow-color: '<#F7567C>Use a color name like <#4ECDC4>red <#F7567C>or a hex color like <#4ECDC4>#FF0368<#F7567C>.'
-  invalid-team-color: '<#F7567C>NPCs can only glow in color names like <#4ECDC4>red <#F7567C>or <#4ECDC4>aqua<#F7567C>.'
+  invalid-team-color: '<#F7567C>NPCs glow in their scoreboard team color, so only color names like <#4ECDC4>red <#F7567C>or <#4ECDC4>aqua <#F7567C>work. Hex works on item and block displays.'
   invalid-line: "<#F7567C>That line doesn't exist. This display has <#4ECDC4><lines> <#F7567C>lines."
   unknown-sound: '<#F7567C>Unknown sound <#4ECDC4><sound><#F7567C>.'
   skin-not-found: "<#F7567C>Couldn't find a skin for <#4ECDC4><player><#F7567C>."
@@ -93,6 +95,9 @@ messages:
   created: '<#4ECDC4>Created <type> <#F7FFF7><id> <#4ECDC4>and selected it.'
   selected: '<#4ECDC4>Selected <type> <#F7FFF7><id><#4ECDC4>.'
   moved: '<#4ECDC4>Moved <type> <#F7FFF7><id> <#4ECDC4>to you.'
+  location-set: '<#4ECDC4>Moved <type> <#F7FFF7><id> <#4ECDC4>to <#F7FFF7><x>, <y>, <z><#4ECDC4>.'
+  block-set: '<#4ECDC4>Block set to <#F7FFF7><material><#4ECDC4>.'
+  item-set: '<#4ECDC4>Item set to <#F7FFF7><material><#4ECDC4>.'
   removed: '<#4ECDC4>Removed <type> <#F7FFF7><id><#4ECDC4>.'
   name-set: '<#4ECDC4>Name set to <#F7FFF7><name><#4ECDC4>.'
   name-removed: '<#4ECDC4>Name removed.'
@@ -126,6 +131,7 @@ help:
   create: '<gray>- /<label> create <npc|text|item|block> [name]'
   select: '<gray>- /<label> select [id] <dark_gray>(or look at one)'
   movehere: '<gray>- /<label> movehere'
+  setlocation: '<gray>- /<label> setlocation <x> <y> <z>'
   remove: '<gray>- /<label> remove'
   info: '<gray>- /<label> info'
   list: '<gray>- /<label> list [npc|item|block|text]'
@@ -142,6 +148,8 @@ help:
   create-block: '<gray>- /<label> create block [name] <dark_gray>(of the held block)'
   create-text: '<gray>- /<label> create text <text>'
   name: '<gray>- /<label> name [name]'
+  setblock: '<gray>- /<label> setblock <dark_gray>(to the held block)'
+  setitem: '<gray>- /<label> setitem <dark_gray>(to the held item)'
   desc: '<gray>- /<label> desc [text]'
   addline: '<gray>- /<label> addline <text>'
   editline: '<gray>- /<label> editline <line> <text>'

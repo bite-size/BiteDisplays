@@ -66,6 +66,8 @@ Editing commands work on whatever you have selected, so you don't name the type.
 | `/bd glow [color]` | NPC, item, block | Makes it glow. NPCs take color names like `red` or `aqua`, displays hex colors too. |
 | `/bd cmd [<console\|player> <command>]` | All | Runs a command when it's right-clicked |
 | `/bd rotate <yaw\|pitch> <degrees>` | Item, block | Rotates it |
+| `/bd setblock` | Block | Shows the block you're holding instead |
+| `/bd setitem` | Item | Shows the item you're holding instead |
 | `/bd skin <player>` | NPC | Gives it a player's skin |
 | `/bd desc [text]` | NPC | Sets the line under the name |
 | `/bd sound [sound]` | NPC | Plays a sound when it's right-clicked, like `entity.experience_orb.pickup` |
@@ -85,6 +87,7 @@ Editing commands work on whatever you have selected, so you don't name the type.
 | `/bd help [npc\|text\|item\|block]` | Shows the commands you can use, or every way to edit one type |
 | `/bd select [id]` | Selects the entity you're looking at, or the one with that ID |
 | `/bd movehere` | Moves your selection to you |
+| `/bd setlocation <x> <y> <z>` | Moves your selection to exact coordinates, like `100.5 64 -20.5` for the center of a block. `/bd info` shows where it is now. |
 | `/bd remove` | Removes your selection |
 | `/bd info` | Shows everything about your selection |
 | `/bd list [npc\|item\|block\|text]` | Lists every entity, or one type, with a **[SELECT]** button on each |
@@ -101,7 +104,7 @@ Editing commands work on whatever you have selected, so you don't name the type.
 | `bitedisplays.text` | Creating and editing text displays |
 | `bitedisplays.item` | Creating and editing item displays |
 | `bitedisplays.block` | Creating and editing block displays |
-| `bitedisplays.manage` | `select`, `movehere`, `remove`, `info`, and `list` |
+| `bitedisplays.manage` | `select`, `movehere`, `setlocation`, `remove`, `info`, and `list` |
 | `bitedisplays.admin` | `save` and `reload` |
 
 All permissions default to **op**. Players without `bitedisplays.use` won't see the command at all.
@@ -120,7 +123,7 @@ Names, descriptions, and text lines all use [MiniMessage](https://docs.advntr.de
 
 On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts. Spigot only accepts classic text, so colors, gradients, and decorations work there, but tags like `<font>` and `<lang>` don't.
 
-**Glow colors:** NPCs glow in the 16 color names (`red`, `aqua`, `gold`, ...). Item and block displays also take hex colors like `#FF0368`. `none` turns the glow off. Text displays can't glow, so try `/bd shadow true` on them.
+**Glow colors:** the color names are vanilla's 16 chat colors (`red`, `aqua`, `gold`, `light_purple`, ...), and look the same on NPCs and displays. Item and block displays also take hex colors like `#FF0368`. NPCs can't: they glow in their scoreboard team color, which the game limits to those 16. `none` turns the glow off. Text displays can't glow at all, so try `/bd shadow true` on them.
 
 **Click commands** run as the console or as the player who clicked, with that player's own permissions. The `/` is optional, and `@p` becomes the name of the player who clicked. To stop players spamming them, set `clicks.cooldown` in config.yml.
 

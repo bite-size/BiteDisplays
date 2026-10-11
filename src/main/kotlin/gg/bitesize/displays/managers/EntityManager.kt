@@ -143,6 +143,18 @@ object EntityManager {
             is BiteText -> entity.location = location
         }
 
+        // Chunk loads and unloads find entities by their location, so one moved into an unloaded chunk
+        // leaves the world now and spawns when that chunk loads
+        val world = location.world
+        if (world == null || !world.isChunkLoaded(location.blockX shr 4, location.blockZ shr 4)) {
+            despawnCompanions(id)
+            bukkitEntities.remove(id)?.let { bukkit ->
+                owners.remove(bukkit.uniqueId)
+                bukkit.remove()
+            }
+            return true
+        }
+
         // An entity in an unloaded chunk (selected by ID) has no handle, so it's spawned at the new spot instead
         val bukkit = bukkitEntities[id]
         if (bukkit == null) {

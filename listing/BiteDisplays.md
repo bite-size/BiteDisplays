@@ -57,6 +57,7 @@ Editing commands work on your selection, whatever it is. If one doesn't fit, it 
 | `/bd glow [color]` | NPC, item, block | Glow in a color name (or HEX for displays) |
 | `/bd cmd [<console\|player> <command>]` | All | Run a command on right-click |
 | `/bd rotate <yaw\|pitch> <degrees>` | Item, block | Rotate it |
+| `/bd setblock` / `/bd setitem` | Block / item | Swap in the block or item you're holding |
 | `/bd skin <player>` | NPC | Use a player's skin |
 | `/bd desc [text]` | NPC | Set the line under the name |
 | `/bd sound [sound]` | NPC | Play a sound on right-click |
@@ -75,6 +76,7 @@ Leave out a `[value]` to remove it. In commands, `@p` is the player who clicked.
 |---|---|
 | `/bd select [id]` | Select the entity you're looking at, or by ID like `npc-1` |
 | `/bd movehere` | Move your selection to you |
+| `/bd setlocation <x> <y> <z>` | Move it to exact coordinates |
 | `/bd remove` | Remove your selection |
 | `/bd info` | Show your selection's details |
 | `/bd list [type]` | List every entity with a **[SELECT]** button, or one type |

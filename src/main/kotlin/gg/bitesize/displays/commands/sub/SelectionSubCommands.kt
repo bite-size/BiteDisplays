@@ -54,6 +54,41 @@ class MoveHereSubCommand : SubCommand("movehere", Permissions.MANAGE) {
 
 }
 
+/** `setlocation <x> <y> <z>`: an exact spot in the selection's world, like 100.5 64 -20.5 for a block's center. */
+class SetLocationSubCommand : SubCommand("setlocation", Permissions.MANAGE) {
+
+    override fun execute(sender: CommandSender, label: String, args: List<String>) {
+        val player = sender as Player
+        val entity = selection(player, label) ?: return
+        if (args.size != 3) return sendUsage(player, label)
+
+        val coordinates = args.map { it.toDoubleOrNull()?.takeIf(Double::isFinite) ?: return error(player, "invalid-number") }
+        // Same world and facing, so only the position changes
+        val location = entity.location.clone().apply {
+            x = coordinates[0]
+            y = coordinates[1]
+            z = coordinates[2]
+        }
+
+        EntityManager.teleport(entity.id, location)
+        success(player, "location-set", entityPlaceholders(entity), locationPlaceholders(location, exact = true))
+    }
+
+    /** The selection's current coordinates, to edit from. */
+    override fun tabComplete(sender: CommandSender, args: List<String>): List<String> {
+        val entity = (sender as? Player)?.let { EntityManager.getSelection(it.uniqueId) } ?: return emptyList()
+        val location = entity.location
+        val current = when (args.size) {
+            1 -> location.x
+            2 -> location.y
+            3 -> location.z
+            else -> return emptyList()
+        }
+        return matching(args.last(), listOf(coordinate(current)))
+    }
+
+}
+
 class RemoveSubCommand : SubCommand("remove", Permissions.MANAGE) {
 
     override fun execute(sender: CommandSender, label: String, args: List<String>) {
@@ -74,7 +109,7 @@ class InfoSubCommand : SubCommand("info", Permissions.MANAGE) {
 
         val none = info("none")
         line(player, "header", entityPlaceholders(entity))
-        line(player, "location", locationPlaceholders(entity.location))
+        line(player, "location", locationPlaceholders(entity.location, exact = true))
 
         when (entity) {
             is BiteNpc -> {

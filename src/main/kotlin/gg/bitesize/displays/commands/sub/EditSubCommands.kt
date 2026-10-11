@@ -2,8 +2,10 @@ package gg.bitesize.displays.commands.sub
 
 import gg.bitesize.displays.commands.EditSubCommand
 import gg.bitesize.displays.managers.EntityManager
+import gg.bitesize.displays.models.BiteBlock
 import gg.bitesize.displays.models.BiteDisplay
 import gg.bitesize.displays.models.BiteEntity
+import gg.bitesize.displays.models.BiteItem
 import gg.bitesize.displays.models.BiteNpc
 import gg.bitesize.displays.models.BiteText
 import gg.bitesize.displays.models.BiteType
@@ -15,7 +17,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.entity.Player
 import java.util.Locale
 
-// Actions shared by more than one type. Each type's own are in NpcSubCommands and TextSubCommands.
+// Actions shared by more than one type, and the item and block ones. NPC and text ones are in NpcSubCommands and TextSubCommands.
 
 /** `name [name]`: the NPC's nametag, or the label above an item or block. No name removes it. */
 class NameSubCommand : EditSubCommand<BiteEntity>("name", BiteType.NPC, BiteType.ITEM, BiteType.BLOCK) {
@@ -162,6 +164,35 @@ class RotateSubCommand : EditSubCommand<BiteDisplay>("rotate", BiteType.ITEM, Bi
         1 -> matching(args[0], axes)
         2 -> hint(args[1], "<degrees>")
         else -> emptyList()
+    }
+
+}
+
+/** `setblock`: shows the block in the player's main hand instead, keeping everything else. */
+class SetBlockSubCommand : EditSubCommand<BiteBlock>("setblock", BiteType.BLOCK) {
+
+    override fun edit(player: Player, entity: BiteBlock, label: String, args: List<String>) {
+        val held = player.inventory.itemInMainHand
+        // Air counts as a block, so it's ruled out first
+        if (held.type.isAir || !held.type.isBlock) return error(player, "no-block")
+
+        entity.itemStack = held.clone()
+        EntityManager.updateEntity(entity)
+        success(player, "block-set", Placeholder.unparsed("material", held.type.name.lowercase(Locale.ROOT)))
+    }
+
+}
+
+/** `setitem`: shows the item in the player's main hand instead, keeping everything else. */
+class SetItemSubCommand : EditSubCommand<BiteItem>("setitem", BiteType.ITEM) {
+
+    override fun edit(player: Player, entity: BiteItem, label: String, args: List<String>) {
+        val held = player.inventory.itemInMainHand
+        if (held.type.isAir) return error(player, "no-item")
+
+        entity.itemStack = held.clone()
+        EntityManager.updateEntity(entity)
+        success(player, "item-set", Placeholder.unparsed("material", held.type.name.lowercase(Locale.ROOT)))
     }
 
 }

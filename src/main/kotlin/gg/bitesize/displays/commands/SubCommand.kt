@@ -13,6 +13,7 @@ import org.bukkit.Location
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * A `/bitedisplays <name> ...` subcommand. The root command checks player-only and
@@ -109,15 +110,19 @@ abstract class SubCommand(
         return EntityManager.getAll().sortedWith(compareBy({ it.type }, { it.number })).map { it.displayId }
     }
 
-    /** `<world>`, `<x>`, `<y>`, and `<z>` of a block position. */
-    protected fun locationPlaceholders(location: Location): TagResolver {
+    /** `<world>`, `<x>`, `<y>`, and `<z>`: the block position, or with [exact] the position to 3 decimals. */
+    protected fun locationPlaceholders(location: Location, exact: Boolean = false): TagResolver {
+        fun format(value: Double, block: Int) = if (exact) coordinate(value) else block.toString()
         return TagResolver.resolver(
             Placeholder.unparsed("world", location.world?.name ?: "?"),
-            Placeholder.unparsed("x", location.blockX.toString()),
-            Placeholder.unparsed("y", location.blockY.toString()),
-            Placeholder.unparsed("z", location.blockZ.toString()),
+            Placeholder.unparsed("x", format(location.x, location.blockX)),
+            Placeholder.unparsed("y", format(location.y, location.blockY)),
+            Placeholder.unparsed("z", format(location.z, location.blockZ)),
         )
     }
+
+    /** A coordinate to 3 decimals, without trailing zeros: 100.5, not 100.500. */
+    protected fun coordinate(value: Double): String = number(BigDecimal(value).setScale(3, RoundingMode.HALF_UP))
 
     /** A number without trailing zeros: 2.0 shows as 2, 0.50 as 0.5. */
     protected fun number(value: Number): String {

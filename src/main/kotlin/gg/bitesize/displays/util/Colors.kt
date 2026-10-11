@@ -4,15 +4,48 @@ import org.bukkit.ChatColor
 import org.bukkit.Color
 import java.util.Locale
 
-/** Parses the glow and background colors players type into commands. */
+/**
+ * Parses the glow and background colors players type into commands.
+ *
+ * Color names are vanilla's 16 chat colors, the only ones an NPC can glow in (its scoreboard team color).
+ * Displays take any RGB, so a named color gives them the same RGB the client draws for that team color,
+ * and a name glows the same on every type. Hex is displays only.
+ */
 object Colors {
 
-    // Named colors for tab completion
-    val GLOW_COLORS = listOf(
-        "red", "blue", "green", "yellow", "white", "black", "aqua",
-        "purple", "orange", "lime", "pink", "gold", "gray",
-        "dark_red", "dark_blue", "dark_green", "dark_aqua", "dark_purple", "dark_gray"
+    /** Vanilla's chat colors and the RGB the client draws for each. */
+    private val NAMED = linkedMapOf(
+        "black" to (ChatColor.BLACK to 0x000000),
+        "dark_blue" to (ChatColor.DARK_BLUE to 0x0000AA),
+        "dark_green" to (ChatColor.DARK_GREEN to 0x00AA00),
+        "dark_aqua" to (ChatColor.DARK_AQUA to 0x00AAAA),
+        "dark_red" to (ChatColor.DARK_RED to 0xAA0000),
+        "dark_purple" to (ChatColor.DARK_PURPLE to 0xAA00AA),
+        "gold" to (ChatColor.GOLD to 0xFFAA00),
+        "gray" to (ChatColor.GRAY to 0xAAAAAA),
+        "dark_gray" to (ChatColor.DARK_GRAY to 0x555555),
+        "blue" to (ChatColor.BLUE to 0x5555FF),
+        "green" to (ChatColor.GREEN to 0x55FF55),
+        "aqua" to (ChatColor.AQUA to 0x55FFFF),
+        "red" to (ChatColor.RED to 0xFF5555),
+        "light_purple" to (ChatColor.LIGHT_PURPLE to 0xFF55FF),
+        "yellow" to (ChatColor.YELLOW to 0xFFFF55),
+        "white" to (ChatColor.WHITE to 0xFFFFFF),
     )
+
+    /** Other names players reach for, as the chat color closest to them. */
+    private val ALIASES = mapOf(
+        "grey" to "gray",
+        "dark_grey" to "dark_gray",
+        "purple" to "light_purple",
+        "pink" to "light_purple",
+        "magenta" to "light_purple",
+        "orange" to "gold",
+        "lime" to "green",
+    )
+
+    /** The names for tab completion. */
+    val GLOW_COLORS: List<String> = NAMED.keys.toList()
 
     /**
      * Parses a hex color string to a Bukkit Color.
@@ -31,59 +64,17 @@ object Colors {
         }
     }
 
-    /**
-     * Parses a color by name or hex string to a Bukkit Color.
-     * Supports named Minecraft colors and #RRGGBB / #AARRGGBB hex codes.
-     */
+    /** A display's glow color: a color name (in its chat color's RGB) or #RRGGBB / #AARRGGBB. */
     fun parse(input: String): Color? {
-        return when (input.lowercase(Locale.ROOT)) {
-            "red" -> Color.RED
-            "blue" -> Color.BLUE
-            "green" -> Color.GREEN
-            "yellow" -> Color.YELLOW
-            "white" -> Color.WHITE
-            "black" -> Color.fromRGB(0, 0, 0)
-            "aqua" -> Color.AQUA
-            "purple" -> Color.PURPLE
-            "orange" -> Color.ORANGE
-            "lime" -> Color.LIME
-            "pink" -> Color.fromRGB(255, 105, 180)
-            "gold" -> Color.fromRGB(255, 215, 0)
-            "gray", "grey" -> Color.GRAY
-            "dark_red" -> Color.fromRGB(170, 0, 0)
-            "dark_blue" -> Color.fromRGB(0, 0, 170)
-            "dark_green" -> Color.fromRGB(0, 170, 0)
-            "dark_aqua" -> Color.fromRGB(0, 170, 170)
-            "dark_purple" -> Color.fromRGB(170, 0, 170)
-            "dark_gray", "dark_grey" -> Color.fromRGB(85, 85, 85)
-            else -> parseHex(input)
-        }
+        return named(input)?.let { Color.fromRGB(it.second) } ?: parseHex(input)
     }
 
-    /**
-     * Converts a color name to a ChatColor for scoreboard teams, which is how NPCs glow.
-     * Only supports the 16 standard Minecraft chat colors (no hex).
-     */
-    fun teamColor(color: String): ChatColor? {
-        return when (color.lowercase(Locale.ROOT)) {
-            "red" -> ChatColor.RED
-            "blue" -> ChatColor.BLUE
-            "green", "lime" -> ChatColor.GREEN
-            "yellow" -> ChatColor.YELLOW
-            "white" -> ChatColor.WHITE
-            "black" -> ChatColor.BLACK
-            "aqua" -> ChatColor.AQUA
-            "purple", "light_purple", "pink" -> ChatColor.LIGHT_PURPLE
-            "gold", "orange" -> ChatColor.GOLD
-            "gray", "grey" -> ChatColor.GRAY
-            "dark_red" -> ChatColor.DARK_RED
-            "dark_blue" -> ChatColor.DARK_BLUE
-            "dark_green" -> ChatColor.DARK_GREEN
-            "dark_aqua" -> ChatColor.DARK_AQUA
-            "dark_purple" -> ChatColor.DARK_PURPLE
-            "dark_gray", "dark_grey" -> ChatColor.DARK_GRAY
-            else -> null
-        }
+    /** The scoreboard team color for a color name, which is how NPCs glow. Hex can't be one. */
+    fun teamColor(color: String): ChatColor? = named(color)?.first
+
+    private fun named(input: String): Pair<ChatColor, Int>? {
+        val name = input.lowercase(Locale.ROOT)
+        return NAMED[ALIASES[name] ?: name]
     }
 
 }
