@@ -11,6 +11,7 @@ object PlayerListener : Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     fun onQuit(event: PlayerQuitEvent) {
         EntityManager.clearSelection(event.player.uniqueId)
+        EntityInteractListener.forget(event.player)
     }
 
 }

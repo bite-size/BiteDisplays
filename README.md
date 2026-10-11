@@ -19,18 +19,18 @@ BiteDisplays is a lightweight way to bring your spawn, shops, and builds to life
 ```text
 /bd npc create <gradient:#FF0368:#4ECDC4>Bite Keeper</gradient>
 /bd npc skin Notch
-/bd npc cmd warp shop {player}
+/bd npc cmd console warp shop @p
 /bd text create <#FF0368>Welcome to the server
 /bd item bouncing true
 ```
 
 ## Highlights
 
-- **Four entity types.** NPCs with skins and equipment, multi-line text displays, and displays of any item or block.
-- **Click actions.** NPCs and item and block displays run a console command when right-clicked, with `{player}` filled in. NPCs can play a sound too.
-- **Modern formatting.** MiniMessage gradients, hex colors, and decorations in names, descriptions, and text lines.
-- **Point and edit.** New entities are selected for you. Look at any other one and `/bd select` it, then move, inspect, or remove it.
-- **Smart tab completion.** Suggests actions, glow colors, every game sound, online players for skins, and the lines on the text display you've selected.
+- **Four entity types.** NPCs with skins, equipment, and any size, multi-line text displays, and displays of any item or block. NPCs can't be hurt, even by players in creative mode.
+- **Click actions.** NPCs and item and block displays run a command when right-clicked, as the console or as the player who clicked, with `@p` filled in. NPCs can play a sound too.
+- **Modern formatting.** MiniMessage gradients, hex colors, and decorations in names, descriptions, and text lines. Classic `&` color codes work too.
+- **Point and edit.** New entities are selected for you. Look at any other one and `/bd select` it, or click **[SELECT]** in `/bd list`, then move, inspect, or remove it.
+- **Smart tab completion.** Suggests actions, glow colors, every game sound, online players for skins, entity IDs, and the lines on the text display you've selected.
 - **Lightweight.** Entities are vanilla mannequins and display entities, saved to one file and respawned as their chunks load. No extra libraries to install.
 
 ## Getting started
@@ -44,9 +44,9 @@ BiteDisplays is a lightweight way to bring your spawn, shops, and builds to life
 
 ## Commands
 
-The main command is `/bitedisplays`, with the shorter alias `/bd`. New entities appear where you stand and are selected right away, so you can keep editing them. Most other commands work on your selection.
+The main command is `/bitedisplays`, with the shorter alias `/bd`. New entities appear where you stand and are selected right away, so you can keep editing them. Most other commands work on your selection. Every entity gets an ID like `npc-1` or `text-3`.
 
-Leave out a `[value]` to remove it, like `/bd npc glow` to stop an NPC glowing.
+Leave out a `[value]` to remove it, like `/bd npc glow` to stop an NPC glowing (`none` works too).
 
 ### NPCs
 
@@ -56,8 +56,9 @@ Leave out a `[value]` to remove it, like `/bd npc glow` to stop an NPC glowing.
 | `/bd npc skin <player>` | Gives it a player's skin |
 | `/bd npc name [name]` | Sets the name above its head |
 | `/bd npc desc [text]` | Sets the line under the name |
+| `/bd npc size <scale>` | Scales it, from `0.0625` to `16` |
 | `/bd npc glow [color]` | Makes it glow in a color like `red` or `aqua` |
-| `/bd npc cmd [command]` | Runs a console command when it's right-clicked |
+| `/bd npc cmd [<console\|player> <command>]` | Runs a command when it's right-clicked |
 | `/bd npc sound [sound]` | Plays a sound when it's right-clicked, like `entity.experience_orb.pickup` |
 | `/bd npc equipment` | Opens a menu for its armor and held items |
 
@@ -71,7 +72,7 @@ Leave out a `[value]` to remove it, like `/bd npc glow` to stop an NPC glowing.
 | `/bd text delline <line>` | Removes a line |
 | `/bd text background <hex>` | Sets the background, like `#FF0368` or `#64000000` with opacity |
 | `/bd text glow [color]` | Makes it glow in a color name or hex color |
-| `/bd text billboard <true\|false>` | Turns it to face players |
+| `/bd text billboard <true\|false>` | Turns it to face players (on by default) |
 | `/bd text size <scale>` | Scales it |
 
 ### Item and block displays
@@ -85,8 +86,8 @@ Hold the item or block you want to show, then use `item` or `block`:
 | `/bd <item\|block> rotate <yaw\|pitch> <degrees>` | Rotates it |
 | `/bd <item\|block> size <scale>` | Scales it |
 | `/bd <item\|block> name [name]` | Shows a name above it |
-| `/bd <item\|block> cmd [command]` | Runs a console command when it's right-clicked |
-| `/bd <item\|block> glowing <true\|false>` | Makes it glow |
+| `/bd <item\|block> cmd [<console\|player> <command>]` | Runs a command when it's right-clicked |
+| `/bd <item\|block> glow [color]` | Makes it glow in a color name or hex color |
 | `/bd item bouncing <true\|false>` | Bobs the item up and down |
 
 ### Managing entities
@@ -94,11 +95,11 @@ Hold the item or block you want to show, then use `item` or `block`:
 | Command | What it does |
 |---|---|
 | `/bd help` | Shows the commands you can use. `/bd npc`, `/bd text`, `/bd item`, and `/bd block` list their own. |
-| `/bd select` | Selects the entity you're looking at |
+| `/bd select [id]` | Selects the entity you're looking at, or the one with that ID |
 | `/bd movehere` | Moves your selection to you |
 | `/bd remove` | Removes your selection |
 | `/bd info` | Shows everything about your selection |
-| `/bd list [npc\|item\|block\|text]` | Lists every entity, or one type |
+| `/bd list [npc\|item\|block\|text]` | Lists every entity, or one type, with a **[SELECT]** button on each |
 | `/bd save` | Saves all entities now |
 | `/bd reload` | Reloads `config.yml` and `messages.yml` |
 
@@ -127,12 +128,13 @@ Names, descriptions, and text lines all use [MiniMessage](https://docs.advntr.de
 | Hex colors | `<#FF0368>Magenta` |
 | Gradients and rainbows | `<gradient:#FF0368:#4ECDC4>Bitesize</gradient>`, `<rainbow>Prism</rainbow>` |
 | Decorations | `<bold>`, `<italic>`, `<underlined>`, `<strikethrough>`, `<obfuscated>` |
+| Classic codes | `&aGreen`, `&l&cBold red`, `&#FF0368Magenta` |
 
 On Paper and Purpur, text keeps every MiniMessage feature, like custom fonts. Spigot only accepts classic text, so colors, gradients, and decorations work there, but tags like `<font>` and `<lang>` don't.
 
-**Glow colors:** NPCs glow in the 16 color names (`red`, `aqua`, `gold`, ...). Text displays also take hex colors like `#FF0368`.
+**Glow colors:** NPCs glow in the 16 color names (`red`, `aqua`, `gold`, ...). Text, item, and block displays also take hex colors like `#FF0368`. `none` turns the glow off.
 
-**Click commands** run from the console, so leave out the `/`. `{player}` becomes the name of the player who clicked.
+**Click commands** run as the console or as the player who clicked, with that player's own permissions. The `/` is optional, and `@p` becomes the name of the player who clicked.
 
 ## Configuration
 
@@ -156,6 +158,8 @@ text:
   default-line: "Text Display"
   # Background of text displays without their own, as #RRGGBB or #AARRGGBB (AA is opacity)
   default-background: "#64000000"
+  # Whether new text displays turn to face players. Change one later with /bd text billboard
+  default-billboard: true
 
 animations:
   # Item displays with /bd item bouncing true
@@ -172,14 +176,14 @@ Run `/bd reload` after editing.
 <details>
 <summary><b>messages.yml</b>: every message the plugin sends</summary>
 
-Messages are grouped into `errors`, `messages`, `help`, `info`, and `gui`, and all of them support MiniMessage. The `prefix` and `error-prefix` at the top are added for you, and the `types` section names each entity type.
+Messages are grouped into `errors`, `messages`, `help`, `info`, and `gui`, and all of them support MiniMessage and `&` codes. The `prefix` and `error-prefix` at the top are added for you, the `types` section names each entity type, and `runners` names who runs a click command.
 
 | Variable | Meaning |
 |---|---|
 | `<label>` | The command label the player used, like `bd` |
-| `<type>` / `<id>` | An entity's type and short ID, like `NPC` and `1a2b3c4d` |
+| `<type>` / `<id>` | An entity's type and ID, like `NPC` and `npc-1` |
 | `<name>` / `<description>` | A name or description, with its formatting |
-| `<command>` / `<sound>` | A click command or sound |
+| `<command>` / `<runner>` / `<sound>` | A click command, who runs it, or a click sound |
 | `<color>` | A glow or background color |
 | `<player>` | The player whose skin is used |
 | `<axis>` / `<degrees>` / `<size>` | A rotation or scale |
@@ -187,6 +191,7 @@ Messages are grouped into `errors`, `messages`, `help`, `info`, and `gui`, and a
 | `<count>` | A number of entities |
 | `<range>` | The selection range |
 | `<world>`, `<x>`, `<y>`, `<z>` | An entity's location |
+| `<select>` | The **[SELECT]** button in `/bd list` |
 
 New messages from updates are filled in automatically, so you never need to regenerate the file.
 

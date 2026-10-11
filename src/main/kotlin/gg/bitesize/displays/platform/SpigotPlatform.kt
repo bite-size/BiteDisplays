@@ -28,7 +28,9 @@ object SpigotPlatform : Platform {
     }
 
     override fun setDescription(mannequin: Mannequin, text: String?) {
+        // A null description means the default label here, so it's hidden instead
         mannequin.description = text?.let { FormatManager.toLegacy(it) }
+        mannequin.isHideDescription = text == null
     }
 
     override fun setSkin(mannequin: Mannequin, skin: Skin) {

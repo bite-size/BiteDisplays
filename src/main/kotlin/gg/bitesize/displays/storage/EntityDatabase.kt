@@ -46,8 +46,13 @@ object EntityDatabase {
         val type = object : TypeToken<List<SerializedEntity>>() {}.type
         val list: List<SerializedEntity> = gson.fromJson(text, type) ?: return
 
+        // Entities saved before IDs were numbered (number 0) get the next free number of their type
+        val highest = list.groupBy { it.type }.mapValues { (_, entries) -> entries.maxOf { it.number } }.toMutableMap()
+
         for (data in list) {
-            val entity = fromSerialized(data) ?: continue
+            val number = data.number.takeIf { it > 0 }
+                ?: (highest.getValue(data.type) + 1).also { highest[data.type] = it }
+            val entity = fromSerialized(data, number) ?: continue
             EntityManager.spawn(entity)
         }
     }
@@ -59,6 +64,7 @@ object EntityDatabase {
         val base = SerializedEntity(
             type = entity.type.key,
             id = entity.id.toString(),
+            number = entity.number,
             world = loc.world?.name ?: return null,
             x = loc.x, y = loc.y, z = loc.z,
             yaw = loc.yaw, pitch = loc.pitch
@@ -69,10 +75,12 @@ object EntityDatabase {
                 name = entity.name,
                 skinValue = entity.skinValue,
                 skinSignature = entity.skinSignature,
-                command = entity.command,
+                command = entity.command?.command,
+                commandRunner = entity.command?.runner?.key,
                 glowColor = entity.glowColor,
                 description = entity.description,
                 sound = entity.sound,
+                npcScale = entity.scale,
                 itemInHand = entity.itemInHand?.let { encodeItem(it) },
                 offHand = entity.offHand?.let { encodeItem(it) },
                 helmet = entity.helmet?.let { encodeItem(it) },
@@ -85,8 +93,8 @@ object EntityDatabase {
                 scaleX = entity.scale.x, scaleY = entity.scale.y, scaleZ = entity.scale.z,
                 rotationYaw = entity.yaw, rotationPitch = entity.pitch,
                 nameText = entity.nameText,
-                displayCommand = entity.command,
-                displayGlowing = entity.glowing,
+                displayCommand = entity.command?.command,
+                commandRunner = entity.command?.runner?.key,
                 displayGlowColor = entity.glowColor
             )
             is BiteItem -> base.copy(
@@ -94,8 +102,8 @@ object EntityDatabase {
                 scaleX = entity.scale.x, scaleY = entity.scale.y, scaleZ = entity.scale.z,
                 rotationYaw = entity.yaw, rotationPitch = entity.pitch,
                 nameText = entity.nameText,
-                displayCommand = entity.command,
-                displayGlowing = entity.glowing,
+                displayCommand = entity.command?.command,
+                commandRunner = entity.command?.runner?.key,
                 displayGlowColor = entity.glowColor,
                 bouncing = entity.bouncing
             )
@@ -110,22 +118,32 @@ object EntityDatabase {
         }
     }
 
-    private fun fromSerialized(data: SerializedEntity): BiteEntity? {
+    private fun fromSerialized(data: SerializedEntity, number: Int): BiteEntity? {
         val world = Bukkit.getWorld(data.world) ?: return null
         val location = Location(world, data.x, data.y, data.z, data.yaw, data.pitch)
         val id = UUID.fromString(data.id)
 
+        // Commands saved before they had a runner were run by the console
+        val runner = CommandRunner.fromKey(data.commandRunner) ?: CommandRunner.CONSOLE
+        fun command(command: String?) = command?.let { ClickCommand(runner, it) }
+
+        // Displays used to glow with a separate flag, and without a color they glowed white
+        val displayGlow = data.displayGlowColor ?: "white".takeIf { data.displayGlowing == true }
+
         return when (data.type) {
             "npc" -> BiteNpc(
                 id = id,
+                number = number,
                 location = location,
                 name = data.name,
                 skinValue = data.skinValue,
                 skinSignature = data.skinSignature,
-                command = data.command,
+                command = command(data.command),
                 glowColor = data.glowColor,
                 description = data.description,
                 sound = data.sound,
+                // Gson skips constructors, so a missing field reads as 0 rather than the default
+                scale = data.npcScale.takeIf { it > 0 } ?: 1.0,
                 itemInHand = data.itemInHand?.let { decodeItem(it) },
                 offHand = data.offHand?.let { decodeItem(it) },
                 helmet = data.helmet?.let { decodeItem(it) },
@@ -135,31 +153,32 @@ object EntityDatabase {
             )
             "block" -> BiteBlock(
                 id = id,
+                number = number,
                 location = location,
                 itemStack = data.itemStack?.let { decodeItem(it) } ?: return null,
                 scale = Vector3f(data.scaleX, data.scaleY, data.scaleZ),
                 yaw = data.rotationYaw,
                 pitch = data.rotationPitch,
                 nameText = data.nameText,
-                command = data.displayCommand,
-                glowing = data.displayGlowing,
-                glowColor = data.displayGlowColor
+                command = command(data.displayCommand),
+                glowColor = displayGlow
             )
             "item" -> BiteItem(
                 id = id,
+                number = number,
                 location = location,
                 itemStack = data.itemStack?.let { decodeItem(it) } ?: return null,
                 scale = Vector3f(data.scaleX, data.scaleY, data.scaleZ),
                 yaw = data.rotationYaw,
                 pitch = data.rotationPitch,
                 nameText = data.nameText,
-                command = data.displayCommand,
-                glowing = data.displayGlowing,
-                glowColor = data.displayGlowColor,
+                command = command(data.displayCommand),
+                glowColor = displayGlow,
                 bouncing = data.bouncing
             )
             "text" -> BiteText(
                 id = id,
+                number = number,
                 location = location,
                 lines = data.lines?.toMutableList() ?: mutableListOf(),
                 scale = Vector3f(data.scaleX, data.scaleY, data.scaleZ),
@@ -198,6 +217,8 @@ object EntityDatabase {
 private data class SerializedEntity(
     val type: String,
     val id: String,
+    /** The number in the ID players see (npc-1). 0 in files saved before IDs were numbered. */
+    val number: Int = 0,
     val world: String,
     val x: Double,
     val y: Double,
@@ -212,6 +233,7 @@ private data class SerializedEntity(
     val glowColor: String? = null,
     val description: String? = null,
     val sound: String? = null,
+    val npcScale: Double = 1.0,
     val itemInHand: String? = null,
     val offHand: String? = null,
     val helmet: String? = null,
@@ -227,9 +249,13 @@ private data class SerializedEntity(
     val rotationPitch: Float = 0f,
     val nameText: String? = null,
     val displayCommand: String? = null,
-    val displayGlowing: Boolean = false,
+    /** Only read, from files saved before glow became a color alone. */
+    val displayGlowing: Boolean? = null,
     val displayGlowColor: String? = null,
     val bouncing: Boolean = false,
+    // ── Shared by NPCs and displays ──
+    /** console or player, for [command] and [displayCommand]. */
+    val commandRunner: String? = null,
     // ── Text display fields ──
     val lines: List<String>? = null,
     val backgroundColor: String? = null,

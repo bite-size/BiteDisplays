@@ -10,30 +10,34 @@ import gg.bitesize.displays.models.BiteDisplay
 import gg.bitesize.displays.models.BiteItem
 import gg.bitesize.displays.models.BiteNpc
 import gg.bitesize.displays.models.BiteText
+import gg.bitesize.displays.models.ClickCommand
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.Locale
 
+/** Selects the entity the player looks at, or one by ID (what the [SELECT] buttons in /bd list run). */
 class SelectSubCommand : SubCommand("select", Permissions.MANAGE) {
 
     override fun execute(sender: CommandSender, label: String, args: List<String>) {
         val player = sender as Player
-        val range = settings.selectionRange
-        val eye = player.eyeLocation
+        val id = args.firstOrNull()
 
-        val hit = player.world.rayTraceEntities(eye, eye.direction, range, 0.5) { it.uniqueId != player.uniqueId }
-            ?.hitEntity
-            ?: return error(player, "nothing-in-sight", Placeholder.unparsed("range", number(range)))
-
-        // Displays with a click command sit inside their Interaction hitbox, which the ray hits first
-        val entity = EntityManager.findByBukkitId(hit.uniqueId)
-            ?: EntityManager.findByCompanionBukkitId(hit.uniqueId)
-            ?: return error(player, "not-managed")
+        val entity = if (id != null) {
+            EntityManager.findByDisplayId(id) ?: return error(player, "unknown-id", Placeholder.unparsed("id", id))
+        } else {
+            val range = settings.selectionRange
+            EntityManager.findInSight(player.eyeLocation, range)
+                ?: return error(player, "nothing-in-sight", Placeholder.unparsed("range", number(range)))
+        }
 
         EntityManager.select(player.uniqueId, entity.id)
         success(player, "selected", entityPlaceholders(entity))
+    }
+
+    override fun tabComplete(sender: CommandSender, args: List<String>): List<String> {
+        return if (args.size == 1) matching(args[0], entityIds()) else emptyList()
     }
 
 }
@@ -44,7 +48,7 @@ class MoveHereSubCommand : SubCommand("movehere", Permissions.MANAGE) {
         val player = sender as Player
         val entity = selection(player, label) ?: return
 
-        EntityManager.teleport(entity.id, player.location)
+        EntityManager.teleport(entity.id, EntityManager.placement(entity.type, player.location))
         success(player, "moved", entityPlaceholders(entity))
     }
 
@@ -75,9 +79,10 @@ class InfoSubCommand : SubCommand("info", Permissions.MANAGE) {
         when (entity) {
             is BiteNpc -> {
                 field(player, "name", entity.name ?: none)
-                field(player, "description", entity.description ?: info("default"))
+                field(player, "description", entity.description ?: none)
+                field(player, "size", number(entity.scale))
                 field(player, "skin", if (entity.skinValue != null) info("custom") else info("default"))
-                field(player, "command", entity.command ?: none)
+                command(player, entity.command)
                 field(player, "sound", entity.sound ?: none)
                 field(player, "glow", entity.glowColor ?: none)
             }
@@ -92,8 +97,8 @@ class InfoSubCommand : SubCommand("info", Permissions.MANAGE) {
                 line(player, "rotation",
                     Placeholder.unparsed("yaw", number(entity.yaw)), Placeholder.unparsed("pitch", number(entity.pitch)))
                 field(player, "name", entity.nameText ?: none)
-                field(player, "command", entity.command ?: none)
-                field(player, "glowing", yesNo(entity.glowing))
+                command(player, entity.command)
+                field(player, "glow", entity.glowColor ?: none)
                 if (entity is BiteItem) field(player, "bouncing", yesNo(entity.bouncing))
             }
             is BiteText -> {
@@ -112,6 +117,12 @@ class InfoSubCommand : SubCommand("info", Permissions.MANAGE) {
     private fun info(key: String): String = ConfigManager.getMessage("info.$key")
 
     private fun yesNo(value: Boolean): String = info(if (value) "enabled" else "disabled")
+
+    /** The click command, then who runs it. */
+    private fun command(player: Player, command: ClickCommand?) {
+        field(player, "command", command?.command ?: info("none"))
+        if (command != null) line(player, "command-runner", runnerPlaceholder(command.runner))
+    }
 
     /** Sends `info.<key>` with the raw [value], so admins see the MiniMessage they typed. */
     private fun field(player: Player, key: String, value: String) {

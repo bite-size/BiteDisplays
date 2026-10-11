@@ -4,24 +4,28 @@
 #####################################
 prefix: '<#FF0368>[BiteDisplays] '
 error-prefix: '<#F7567C>!! '
+# Messages support MiniMessage and legacy codes (&a, &l, &#FF0368).
 # Variables:
 # - <label> = command label.
 # - <type> = entity type, from the types section below.
-# - <id> = short entity ID, like 1a2b3c4d.
+# - <id> = entity ID, like npc-1.
 # - <name> = NPC or display name, with its formatting.
 # - <description> = NPC description, with its formatting.
 # - <command> = click command.
+# - <runner> = who runs the click command, from the runners section below.
 # - <sound> = click sound.
 # - <color> = glow or background color.
 # - <player> = player whose skin is used.
 # - <axis> = yaw or pitch.
 # - <degrees> = rotation in degrees.
-# - <size> = display scale.
+# - <size> = entity scale.
+# - <min>, <max> = the NPC size limits.
 # - <line> = text display line number.
 # - <lines> = number of lines on a text display.
 # - <count> = number of entities (or lines, in info.list-lines).
 # - <range> = selection range in blocks.
 # - <world>, <x>, <y>, <z> = entity location.
+# - <select> = the info.list-select button (a dash in the console).
 # - <value>, <details>, <yaw>, <pitch> = entity details in the info section.
 
 types:
@@ -30,23 +34,29 @@ types:
   block: 'block display'
   text: 'text display'
 
+runners:
+  console: 'the console'
+  player: 'the player'
+
 errors:
   no-permission: '<#F7567C>No permission.'
   players-only: '<#F7567C>Only players can use this command.'
   unknown-command: '<#F7567C>Unknown command.'
   feature-disabled: '<#F7567C>This feature is disabled.'
-  usage-npc: '<#F7567C>Usage: /<label> npc <create|skin|cmd|name|glow|desc|equipment|sound>'
+  usage-npc: '<#F7567C>Usage: /<label> npc <create|skin|cmd|name|glow|desc|size|equipment|sound>'
   usage-npc-create: '<#F7567C>Usage: /<label> npc create <name>'
   usage-npc-skin: '<#F7567C>Usage: /<label> npc skin <player>'
-  usage-item: '<#F7567C>Usage: /<label> item <create|rotate|size|name|cmd|glowing|bouncing>'
+  usage-npc-cmd: '<#F7567C>Usage: /<label> npc cmd <console|player> <command>'
+  usage-npc-size: '<#F7567C>Usage: /<label> npc size <scale>'
+  usage-item: '<#F7567C>Usage: /<label> item <create|rotate|size|name|cmd|glow|bouncing>'
   usage-item-rotate: '<#F7567C>Usage: /<label> item rotate <yaw|pitch> <degrees>'
   usage-item-size: '<#F7567C>Usage: /<label> item size <scale>'
-  usage-item-glowing: '<#F7567C>Usage: /<label> item glowing <true|false>'
+  usage-item-cmd: '<#F7567C>Usage: /<label> item cmd <console|player> <command>'
   usage-item-bouncing: '<#F7567C>Usage: /<label> item bouncing <true|false>'
-  usage-block: '<#F7567C>Usage: /<label> block <create|rotate|size|name|cmd|glowing>'
+  usage-block: '<#F7567C>Usage: /<label> block <create|rotate|size|name|cmd|glow>'
   usage-block-rotate: '<#F7567C>Usage: /<label> block rotate <yaw|pitch> <degrees>'
   usage-block-size: '<#F7567C>Usage: /<label> block size <scale>'
-  usage-block-glowing: '<#F7567C>Usage: /<label> block glowing <true|false>'
+  usage-block-cmd: '<#F7567C>Usage: /<label> block cmd <console|player> <command>'
   usage-text: '<#F7567C>Usage: /<label> text <create|background|addline|delline|editline|glow|billboard|size>'
   usage-text-background: '<#F7567C>Usage: /<label> text background <hex>'
   usage-text-addline: '<#F7567C>Usage: /<label> text addline <text>'
@@ -58,12 +68,13 @@ errors:
   no-selection: '<#F7567C>Nothing selected. Look at an entity and use <#4ECDC4>/<label> select <#F7567C>first.'
   wrong-type: '<#F7567C>This command needs a selected <#4ECDC4><type><#F7567C>.'
   nothing-in-sight: '<#F7567C>Look at an entity within <#4ECDC4><range> <#F7567C>blocks.'
-  not-managed: "<#F7567C>That entity isn't managed by BiteDisplays."
+  unknown-id: "<#F7567C>There's no entity with the ID <#4ECDC4><id><#F7567C>."
   no-item: '<#F7567C>Hold an item in your main hand first.'
   no-block: '<#F7567C>Hold a block in your main hand first.'
   spawn-failed: "<#F7567C>Couldn't spawn the <type> here."
   invalid-number: "<#F7567C>That isn't a number."
   invalid-size: '<#F7567C>Size must be a positive number.'
+  invalid-npc-size: '<#F7567C>NPC size must be from <#4ECDC4><min> <#F7567C>to <#4ECDC4><max><#F7567C>.'
   invalid-boolean: '<#F7567C>Use <#4ECDC4>true <#F7567C>or <#4ECDC4>false<#F7567C>.'
   invalid-color: '<#F7567C>Use a hex color like <#4ECDC4>#FF0368<#F7567C>, or <#4ECDC4>#64000000 <#F7567C>with opacity.'
   invalid-glow-color: '<#F7567C>Use a color name like <#4ECDC4>red <#F7567C>or a hex color like <#4ECDC4>#FF0368<#F7567C>.'
@@ -83,8 +94,8 @@ messages:
   name-set: '<#4ECDC4>Name set to <#F7FFF7><name><#4ECDC4>.'
   name-removed: '<#4ECDC4>Name removed.'
   description-set: '<#4ECDC4>Description set to <#F7FFF7><description><#4ECDC4>.'
-  description-removed: '<#4ECDC4>Description reset to the default.'
-  command-set: '<#4ECDC4>Click command set to <#F7FFF7><command><#4ECDC4>.'
+  description-removed: '<#4ECDC4>Description removed.'
+  command-set: '<#4ECDC4>Click command set to <#F7FFF7><command><#4ECDC4>, run by <runner>.'
   command-removed: '<#4ECDC4>Click command removed.'
   sound-set: '<#4ECDC4>Click sound set to <#F7FFF7><sound><#4ECDC4>.'
   sound-removed: '<#4ECDC4>Click sound removed.'
@@ -95,8 +106,6 @@ messages:
   equipment-updated: '<#4ECDC4>Equipment updated.'
   rotated: '<#4ECDC4>Set <axis> to <#F7FFF7><degrees>°<#4ECDC4>.'
   size-set: '<#4ECDC4>Size set to <#F7FFF7><size><#4ECDC4>.'
-  glowing-on: '<#4ECDC4>Glowing turned on.'
-  glowing-off: '<#4ECDC4>Glowing turned off.'
   bouncing-on: '<#4ECDC4>Bouncing turned on.'
   bouncing-off: '<#4ECDC4>Bouncing turned off.'
   billboard-on: '<#4ECDC4>The text now turns to face players.'
@@ -112,7 +121,7 @@ help:
   item: '<gray>- /<label> item <dark_gray>(item display commands)'
   block: '<gray>- /<label> block <dark_gray>(block display commands)'
   text: '<gray>- /<label> text <dark_gray>(text display commands)'
-  select: '<gray>- /<label> select'
+  select: '<gray>- /<label> select [id] <dark_gray>(or look at one)'
   movehere: '<gray>- /<label> movehere'
   remove: '<gray>- /<label> remove'
   info: '<gray>- /<label> info'
@@ -123,10 +132,11 @@ help:
   npc-header: '<#4ECDC4>--- NPC Commands ---'
   npc-create: '<gray>- /<label> npc create <name>'
   npc-skin: '<gray>- /<label> npc skin <player>'
-  npc-cmd: '<gray>- /<label> npc cmd [command]'
+  npc-cmd: '<gray>- /<label> npc cmd [<console|player> <command>]'
   npc-name: '<gray>- /<label> npc name [name]'
   npc-glow: '<gray>- /<label> npc glow [color]'
   npc-desc: '<gray>- /<label> npc desc [text]'
+  npc-size: '<gray>- /<label> npc size <scale>'
   npc-equipment: '<gray>- /<label> npc equipment'
   npc-sound: '<gray>- /<label> npc sound [sound]'
   item-header: '<#4ECDC4>--- Item Display Commands ---'
@@ -134,16 +144,16 @@ help:
   item-rotate: '<gray>- /<label> item rotate <yaw|pitch> <degrees>'
   item-size: '<gray>- /<label> item size <scale>'
   item-name: '<gray>- /<label> item name [name]'
-  item-cmd: '<gray>- /<label> item cmd [command]'
-  item-glowing: '<gray>- /<label> item glowing <true|false>'
+  item-cmd: '<gray>- /<label> item cmd [<console|player> <command>]'
+  item-glow: '<gray>- /<label> item glow [color]'
   item-bouncing: '<gray>- /<label> item bouncing <true|false>'
   block-header: '<#4ECDC4>--- Block Display Commands ---'
   block-create: '<gray>- /<label> block create'
   block-rotate: '<gray>- /<label> block rotate <yaw|pitch> <degrees>'
   block-size: '<gray>- /<label> block size <scale>'
   block-name: '<gray>- /<label> block name [name]'
-  block-cmd: '<gray>- /<label> block cmd [command]'
-  block-glowing: '<gray>- /<label> block glowing <true|false>'
+  block-cmd: '<gray>- /<label> block cmd [<console|player> <command>]'
+  block-glow: '<gray>- /<label> block glow [color]'
   text-header: '<#4ECDC4>--- Text Display Commands ---'
   text-create: '<gray>- /<label> text create [text]'
   text-background: '<gray>- /<label> text background <hex>'
@@ -161,19 +171,21 @@ info:
   description: '<gray>- Description: <#F7FFF7><value>'
   skin: '<gray>- Skin: <#F7FFF7><value>'
   command: '<gray>- Click command: <#F7FFF7><value>'
+  command-runner: '<gray>- Run by: <#F7FFF7><runner>'
   sound: '<gray>- Click sound: <#F7FFF7><value>'
   glow: '<gray>- Glow: <#F7FFF7><value>'
   material: '<gray>- Material: <#F7FFF7><value>'
   size: '<gray>- Size: <#F7FFF7><value>'
   rotation: '<gray>- Rotation: <#F7FFF7>yaw <yaw>, pitch <pitch>'
-  glowing: '<gray>- Glowing: <#F7FFF7><value>'
   bouncing: '<gray>- Bouncing: <#F7FFF7><value>'
   background: '<gray>- Background: <#F7FFF7><value>'
   billboard: '<gray>- Faces players: <#F7FFF7><value>'
   lines: '<gray>- Lines: <#F7FFF7><value>'
   line: '<gray>  <line>. <#F7FFF7><value>'
   list-header: '<#4ECDC4>--- Entities (<#F7FFF7><count><#4ECDC4>) ---'
-  list-entry: '<gray>- <#F7FFF7><type> <id><gray>: <details> <dark_gray>@ <world> (<x>, <y>, <z>)'
+  list-entry: '<gray><select> <#F7FFF7><type> <id><gray>: <details> <dark_gray>@ <world> (<x>, <y>, <z>)'
+  list-select: '<#FF0368>[SELECT]'
+  list-select-hover: '<gray>Click to select <#F7FFF7><id>'
   list-lines: '<count> lines'
   none: 'none'
   default: 'default'

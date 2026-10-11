@@ -3,6 +3,7 @@ package gg.bitesize.displays.commands
 import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.models.BiteDisplay
 import gg.bitesize.displays.models.BiteType
+import gg.bitesize.displays.util.Colors
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -17,7 +18,7 @@ abstract class DisplaySubCommand<T : BiteDisplay>(
     type: BiteType,
     permission: String,
     extraActions: List<String> = emptyList(),
-) : EntitySubCommand<T>(type, permission, listOf("create", "rotate", "size", "name", "cmd", "glowing") + extraActions) {
+) : EntitySubCommand<T>(type, permission, listOf("create", "rotate", "size", "name", "cmd", "glow") + extraActions) {
 
     private val axes = listOf("yaw", "pitch")
 
@@ -39,8 +40,15 @@ abstract class DisplaySubCommand<T : BiteDisplay>(
             "rotate" -> rotate(player, display, label, args)
             "size" -> size(player, display, label, args)
             "name" -> name(player, display, args)
-            "cmd" -> command(player, display, args)
-            "glowing" -> glowing(player, display, label, args)
+            "cmd" -> command(player, label, args) {
+                display.command = it
+                EntityManager.updateEntity(display)
+            }
+            // Displays glow in any color, named or hex
+            "glow" -> glow(player, args, { Colors.parse(it) != null }, "invalid-glow-color") {
+                display.glowColor = it
+                EntityManager.updateEntity(display)
+            }
             else -> execute(player, display, action, label, args)
         }
     }
@@ -76,29 +84,7 @@ abstract class DisplaySubCommand<T : BiteDisplay>(
         val name = args.joinToString(" ")
         display.nameText = name
         EntityManager.updateEntity(display)
-        success(player, "name-set", Placeholder.parsed("name", name))
-    }
-
-    private fun command(player: Player, display: T, args: List<String>) {
-        if (args.isEmpty()) {
-            display.command = null
-            EntityManager.updateEntity(display)
-            success(player, "command-removed")
-            return
-        }
-
-        val command = args.joinToString(" ")
-        display.command = command
-        EntityManager.updateEntity(display)
-        success(player, "command-set", Placeholder.unparsed("command", command))
-    }
-
-    private fun glowing(player: Player, display: T, label: String, args: List<String>) {
-        val glowing = parseToggle(player, label, "glowing", args) ?: return
-
-        display.glowing = glowing
-        EntityManager.updateEntity(display)
-        success(player, if (glowing) "glowing-on" else "glowing-off")
+        success(player, "name-set", styledPlaceholder("name", name))
     }
 
     override fun tabComplete(sender: CommandSender, action: String, args: List<String>): List<String> {
@@ -110,8 +96,8 @@ abstract class DisplaySubCommand<T : BiteDisplay>(
             }
             "size" -> if (args.size == 1) hint(args[0], "<scale>") else emptyList()
             "name" -> if (args.size == 1) hint(args[0], "[name]") else emptyList()
-            "cmd" -> if (args.size == 1) hint(args[0], "[command]") else emptyList()
-            "glowing" -> toggleCompletions(args)
+            "cmd" -> commandCompletions(args)
+            "glow" -> glowCompletions(args)
             else -> emptyList()
         }
     }

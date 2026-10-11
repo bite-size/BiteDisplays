@@ -28,7 +28,7 @@ class PaperPlatform : Platform {
     }
 
     override fun setDescription(mannequin: Mannequin, text: String?) {
-        mannequin.description = text?.let { miniMessage.deserialize(it) } ?: Mannequin.defaultDescription()
+        mannequin.description = text?.let { miniMessage.deserialize(it) }
     }
 
     override fun setSkin(mannequin: Mannequin, skin: Skin) {
