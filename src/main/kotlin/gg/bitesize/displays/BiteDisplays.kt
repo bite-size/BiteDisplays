@@ -42,6 +42,7 @@ class BiteDisplays : JavaPlugin() {
         server.pluginManager.registerEvents(GuiListener, this)
         server.pluginManager.registerEvents(PlayerListener, this)
         server.pluginManager.registerEvents(ProtectionListener, this)
+        server.messenger.registerOutgoingPluginChannel(this, EntityInteractListener.PROXY_CHANNEL)
 
         AnimationManager.start()
         EntityDatabase.startAutosave()

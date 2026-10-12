@@ -1,5 +1,7 @@
 package gg.bitesize.displays.listeners
 
+import gg.bitesize.displays.BiteDisplays.Companion.INSTANCE
+import gg.bitesize.displays.managers.CommandManager
 import gg.bitesize.displays.managers.ConfigManager
 import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.models.BiteNpc
@@ -12,6 +14,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.inventory.EquipmentSlot
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -24,6 +28,10 @@ object EntityInteractListener : Listener {
 
     // @p alone, not a selector like @p[distance=..5]
     private val clickerSelector = Regex("@p(?![\\[\\w])")
+    private val whitespace = Regex("\\s+")
+
+    /** Velocity reads it too, unless its bungee-plugin-message-channel is off. */
+    const val PROXY_CHANNEL = "BungeeCord"
 
     /**
      * The only click handler. Since 26.3 a right-click fires PlayerInteractAtEntityEvent alone, and that subclass
@@ -70,7 +78,26 @@ object EntityInteractListener : Listener {
 
         when (click.runner) {
             CommandRunner.CONSOLE -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)
-            CommandRunner.PLAYER -> player.performCommand(command)
+            CommandRunner.PLAYER -> if (!connectThroughProxy(player, command)) player.performCommand(command)
         }
+    }
+
+    /**
+     * Sends `server <name>` to the proxy as a BungeeCord Connect message. performCommand runs on this server only, and
+     * Velocity and BungeeCord only see commands the client sends, so their /server never ran from a click.
+     * False (run it here instead) for anything else, or when a plugin on this server has its own /server.
+     */
+    private fun connectThroughProxy(player: Player, command: String): Boolean {
+        val args = command.trim().split(whitespace)
+        if (args.size != 2 || !args[0].equals("server", ignoreCase = true)) return false
+        if (CommandManager.isRegistered("server")) return false
+
+        val message = ByteArrayOutputStream()
+        DataOutputStream(message).use {
+            it.writeUTF("Connect")
+            it.writeUTF(args[1])
+        }
+        player.sendPluginMessage(INSTANCE, PROXY_CHANNEL, message.toByteArray())
+        return true
     }
 }

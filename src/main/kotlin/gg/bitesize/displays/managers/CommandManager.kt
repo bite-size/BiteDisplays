@@ -43,6 +43,9 @@ object CommandManager {
         registeredCommands.add(command)
     }
 
+    /** Whether this server has a command (any plugin's, or a server one) under [label]. */
+    fun isRegistered(label: String): Boolean = commandMap.getCommand(label) != null
+
     fun syncCommands() {
         Bukkit.getServer().onlinePlayers.forEach { player ->
             player.updateCommands()
