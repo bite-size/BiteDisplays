@@ -208,6 +208,32 @@ Every entity is saved here when the server stops, whenever you run `/bd save`, a
 
 </details>
 
+## For developers
+
+Other plugins can find BiteDisplays entities and react to them. Add `BiteDisplays` to `softdepend` (or `depend`) in your plugin.yml and compile against the plugin jar. Everything is in `gg.bitesize.displays.api` and runs on the main thread.
+
+**Finding entities.** `BiteDisplaysApi.find("npc-3")` returns a `BiteEntityInfo` (display ID, type, location, name, and NPC size), whether the entity is spawned or not. `fromBukkit(entity)` works for an NPC or for a display's name label or hitbox. `bukkitEntity(id)` gives you the live entity, and `bounds(id)` the space it appears to fill, which is handy for placing something above it.
+
+**Without a dependency.** Every entity BiteDisplays spawns, name labels and hitboxes included, carries its display ID as a string in its persistent data under `bitedisplays:id`.
+
+**Events.**
+
+| Event | When |
+|---|---|
+| `BiteEntityClickEvent` | A player right-clicks an entity. Cancel it to skip the NPC's sound and click command and handle the click yourself. |
+| `BiteEntitySpawnEvent` | An entity appears: when it's created, and again every time its chunk loads. |
+| `BiteEntityChangeEvent` | A spawned entity is moved or edited. |
+| `BiteEntityDespawnEvent` | An entity leaves the world. `removed` is true when it was deleted, and false when its chunk unloaded. |
+
+```kotlin
+@EventHandler
+fun onClick(event: BiteEntityClickEvent) {
+    if (event.entity.displayId != "npc-3") return
+    event.isCancelled = true
+    event.player.sendMessage("Hello there!")
+}
+```
+
 ## Compatibility
 
 | | |

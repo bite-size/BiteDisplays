@@ -1,5 +1,10 @@
 package gg.bitesize.displays.managers
 
+import gg.bitesize.displays.api.BiteDisplaysApi
+import gg.bitesize.displays.api.BiteEntityChangeEvent
+import gg.bitesize.displays.api.BiteEntityDespawnEvent
+import gg.bitesize.displays.api.BiteEntityInfo
+import gg.bitesize.displays.api.BiteEntitySpawnEvent
 import gg.bitesize.displays.models.*
 import gg.bitesize.displays.platform.Platform
 import gg.bitesize.displays.platform.Skin
@@ -108,6 +113,7 @@ object EntityManager {
         track(entity, bukkit)
         spawnCompanions(entity)
         EntityDatabase.markDirty()
+        Bukkit.getPluginManager().callEvent(BiteEntitySpawnEvent(BiteEntityInfo(entity), bukkit))
         return bukkit
     }
 
@@ -161,6 +167,8 @@ object EntityManager {
             bukkit.remove()
         }
         selections.entries.removeIf { it.value == id }
+        // Fired whether or not it was spawned, so listeners can forget it either way
+        Bukkit.getPluginManager().callEvent(BiteEntityDespawnEvent(BiteEntityInfo(entity), removed = true))
         return true
     }
 
@@ -221,6 +229,7 @@ object EntityManager {
 
         bukkit.teleport(location)
         rebuildCompanions(entity)
+        Bukkit.getPluginManager().callEvent(BiteEntityChangeEvent(BiteEntityInfo(entity), bukkit))
         return true
     }
 
@@ -246,10 +255,10 @@ object EntityManager {
      */
     fun unloadBukkitEntity(id: UUID) {
         despawnCompanions(id)
-        bukkitEntities.remove(id)?.let { bukkit ->
-            owners.remove(bukkit.uniqueId)
-            bukkit.remove()
-        }
+        val bukkit = bukkitEntities.remove(id) ?: return
+        owners.remove(bukkit.uniqueId)
+        bukkit.remove()
+        entities[id]?.let { Bukkit.getPluginManager().callEvent(BiteEntityDespawnEvent(BiteEntityInfo(it), removed = false)) }
     }
 
     fun respawn(entity: BiteEntity): Entity? {
@@ -257,6 +266,7 @@ object EntityManager {
 
         track(entity, bukkit)
         spawnCompanions(entity)
+        Bukkit.getPluginManager().callEvent(BiteEntitySpawnEvent(BiteEntityInfo(entity), bukkit))
         return bukkit
     }
 
@@ -281,6 +291,7 @@ object EntityManager {
 
         // The hitbox and name label follow the name, command, size, and rotation
         rebuildCompanions(entity)
+        Bukkit.getPluginManager().callEvent(BiteEntityChangeEvent(BiteEntityInfo(entity), bukkit))
         return true
     }
 
@@ -292,6 +303,7 @@ object EntityManager {
     private fun track(entity: BiteEntity, bukkit: Entity) {
         bukkitEntities.put(entity.id, bukkit)?.let { owners.remove(it.uniqueId) }
         owners[bukkit.uniqueId] = entity.id
+        BiteDisplaysApi.tag(bukkit, entity.displayId)
     }
 
     // ── Spawn helpers ──────────────────────────────────────────────
@@ -412,7 +424,10 @@ object EntityManager {
             nameDisplay = nameText?.let { spawnNameLabel(entity, it, bounds) },
             interaction = command?.let { spawnHitbox(entity, bounds) },
         )
-        set.all().forEach { owners[it.uniqueId] = entity.id }
+        set.all().forEach { companion ->
+            owners[companion.uniqueId] = entity.id
+            BiteDisplaysApi.tag(companion, entity.displayId)
+        }
         companions[entity.id] = set
     }
 
