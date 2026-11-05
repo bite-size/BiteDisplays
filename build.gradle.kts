@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "gg.bitesize"
-version = "1.0.0"
+version = "1.1.1"
 
 // Minecraft version used by every test server task (runServer, runPurpur, runSpigot)
 val testServerVersion = "26.3"

@@ -206,7 +206,35 @@ New messages from updates are filled in automatically, so you never need to rege
 
 Every entity is saved here when the server stops, whenever you run `/bd save`, and every few minutes after a change (`storage.autosave`). Saves are written off the main thread and replace the file in one step, so a crash can't leave it half-written. The file is only read on startup, so edit it only while the server is stopped.
 
+Entities in worlds that load after BiteDisplays, like Multiverse worlds, appear as soon as their world loads, and the ones in an unloaded world come back when it loads again. Until then they aren't listed, but they stay in the file. An entity that can't be loaded (for example, an item from a newer server version) is logged and kept in the file as it was. If the file itself can't be read, BiteDisplays logs an error and never saves over it. It also keeps a copy of the file as it was at startup in `entities.json.bak`.
+
 </details>
+
+## For developers
+
+Other plugins can find BiteDisplays entities and react to them. Add `BiteDisplays` to `softdepend` (or `depend`) in your plugin.yml and compile against the plugin jar. Everything is in `gg.bitesize.displays.api` and runs on the main thread.
+
+**Finding entities.** `BiteDisplaysApi.find("npc-3")` returns a `BiteEntityInfo` (display ID, type, location, name, and NPC size), whether the entity is spawned or not. Entities in worlds that aren't loaded aren't found until their world loads. `fromBukkit(entity)` works for an NPC or for a display's name label or hitbox. `bukkitEntity(id)` gives you the live entity, and `bounds(id)` the space it appears to fill, which is handy for placing something above it.
+
+**Without a dependency.** Every entity BiteDisplays spawns, name labels and hitboxes included, carries its display ID as a string in its persistent data under `bitedisplays:id`.
+
+**Events.**
+
+| Event | When |
+|---|---|
+| `BiteEntityClickEvent` | A player right-clicks an entity. Cancel it to skip the NPC's sound and click command and handle the click yourself. |
+| `BiteEntitySpawnEvent` | An entity appears: when it's created, and again every time its chunk loads. |
+| `BiteEntityChangeEvent` | A spawned entity is moved or edited. |
+| `BiteEntityDespawnEvent` | An entity leaves the world. `removed` is true when it was deleted, and false when its chunk unloaded. |
+
+```kotlin
+@EventHandler
+fun onClick(event: BiteEntityClickEvent) {
+    if (event.entity.displayId != "npc-3") return
+    event.isCancelled = true
+    event.player.sendMessage("Hello there!")
+}
+```
 
 ## Compatibility
 

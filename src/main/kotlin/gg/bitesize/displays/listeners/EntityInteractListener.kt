@@ -1,6 +1,8 @@
 package gg.bitesize.displays.listeners
 
 import gg.bitesize.displays.BiteDisplays.Companion.INSTANCE
+import gg.bitesize.displays.api.BiteEntityClickEvent
+import gg.bitesize.displays.api.BiteEntityInfo
 import gg.bitesize.displays.managers.CommandManager
 import gg.bitesize.displays.managers.ConfigManager
 import gg.bitesize.displays.managers.EntityManager
@@ -47,6 +49,11 @@ object EntityInteractListener : Listener {
 
         val player = event.player
         if (!offCooldown(player)) return
+
+        // Other plugins can take the click over (a quest NPC, say); cancelling skips the sound and command
+        val click = BiteEntityClickEvent(player, BiteEntityInfo(entity), event.rightClicked)
+        Bukkit.getPluginManager().callEvent(click)
+        if (click.isCancelled) return
 
         // String-based playSound for registry-backed sounds
         if (entity is BiteNpc) entity.sound?.let { player.playSound(entity.location, "minecraft:$it", 1.0f, 1.0f) }
