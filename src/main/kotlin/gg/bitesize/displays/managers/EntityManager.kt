@@ -172,15 +172,33 @@ object EntityManager {
         return true
     }
 
+    /**
+     * Lets go of an entity whose world is unloading, without deleting it: EntityDatabase holds its data
+     * and restores it when the world loads again. Fires a despawn event with `removed = false` if it was spawned.
+     */
+    fun forget(id: UUID) {
+        unloadBukkitEntity(id)
+        val entity = entities.remove(id) ?: return
+        unindex(id, entity.location)
+        boundsCache.remove(id)
+        AnimationManager.forget(id)
+        cleanupGlowTeam(id)
+        selections.entries.removeIf { it.value == id }
+    }
+
     fun get(id: UUID): BiteEntity? = entities[id]
 
     fun getBukkitEntity(id: UUID): Entity? = bukkitEntities[id]
 
     fun getAll(): Collection<BiteEntity> = entities.values
 
-    /** The next number for a new entity of [type]: one past the highest in use. */
+    /** The entities whose location is in [world]. */
+    fun inWorld(world: World): List<BiteEntity> = entities.values.filter { chunkOf(it.location)?.world == world.uid }
+
+    /** The next number for a new entity of [type]: one past the highest in use, including held entities. */
     fun nextNumber(type: BiteType): Int {
-        return (entities.values.filter { it.type == type }.maxOfOrNull { it.number } ?: 0) + 1
+        val highest = entities.values.filter { it.type == type }.maxOfOrNull { it.number } ?: 0
+        return max(highest, EntityDatabase.highestHeld(type)) + 1
     }
 
     /** Finds an entity by the ID players see, like npc-1. */

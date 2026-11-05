@@ -1,10 +1,14 @@
 package gg.bitesize.displays.listeners
 
 import gg.bitesize.displays.managers.EntityManager
+import gg.bitesize.displays.storage.EntityDatabase
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.ChunkUnloadEvent
+import org.bukkit.event.world.WorldLoadEvent
+import org.bukkit.event.world.WorldUnloadEvent
 
 /**
  * Keeps tracked entities alive across chunk load/unload cycles.
@@ -16,6 +20,9 @@ import org.bukkit.event.world.ChunkUnloadEvent
  *
  * Chunk events are the most frequent on a server, so each one is a single lookup in
  * EntityManager's chunk index, and chunks without our entities cost nothing more.
+ *
+ * Worlds can load after BiteDisplays (Multiverse and other world plugins) and unload while the server runs,
+ * so EntityDatabase holds the entities of worlds that aren't loaded and restores them when the world loads.
  */
 object WorldListener : Listener {
 
@@ -41,5 +48,16 @@ object WorldListener : Listener {
         for (entity in EntityManager.inChunk(chunk.world, chunk.x, chunk.z)) {
             EntityManager.unloadBukkitEntity(entity.id)
         }
+    }
+
+    @EventHandler
+    fun onWorldLoad(event: WorldLoadEvent) {
+        EntityDatabase.onWorldLoad(event.world)
+    }
+
+    // Monitor, so a world another plugin keeps loaded (cancelled) keeps its entities
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    fun onWorldUnload(event: WorldUnloadEvent) {
+        EntityDatabase.onWorldUnload(event.world)
     }
 }

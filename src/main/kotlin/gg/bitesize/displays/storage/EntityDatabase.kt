@@ -2,6 +2,7 @@ package gg.bitesize.displays.storage
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
 import gg.bitesize.displays.BiteDisplays.Companion.INSTANCE
 import gg.bitesize.displays.managers.ConfigManager
@@ -9,6 +10,7 @@ import gg.bitesize.displays.managers.EntityManager
 import gg.bitesize.displays.models.*
 import org.bukkit.Bukkit
 import org.bukkit.Location
+import org.bukkit.World
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitTask
 import org.bukkit.util.io.BukkitObjectInputStream
@@ -35,6 +37,10 @@ import java.util.logging.Level
  * Entities and items can only be read on the main thread, so a save snapshots them there, then builds the JSON
  * and writes the file on one background thread (so saves never overlap). The file is written next to the old one
  * and moved over it, so a crash mid-save can't leave it half-written. Autosave only saves after a change.
+ *
+ * A save writes every entity the file holds, not only those in [EntityManager]: entries that can't be restored
+ * yet are [held] and written back as they were read. Nothing is saved until the file has been read, so a file
+ * that couldn't be read is never replaced.
  */
 object EntityDatabase {
 
@@ -48,11 +54,31 @@ object EntityDatabase {
     @Volatile
     private var dirty = false
 
+    /** Whether entities.json was read. Until it is, saving would replace it with whatever is in memory. */
+    @Volatile
+    private var loaded = false
+
+    /**
+     * Saved entries that aren't in [EntityManager]: their world isn't loaded (yet, or any more), or they couldn't
+     * be read (an item that won't decode, an unknown type). Saved back unchanged, and retried when their world
+     * loads. Main thread only.
+     */
+    private val held = mutableListOf<SerializedEntity>()
+
     fun initialize() {
         val dataFolder = INSTANCE.dataFolder
         if (!dataFolder.exists()) dataFolder.mkdirs()
         file = File(dataFolder, "entities.json")
         if (!file.exists()) file.createNewFile()
+
+        // A copy of the file as it was at startup, before anything can write to it
+        if (file.length() > 0) {
+            try {
+                Files.copy(file.toPath(), File(dataFolder, "entities.json.bak").toPath(), StandardCopyOption.REPLACE_EXISTING)
+            } catch (e: Exception) {
+                INSTANCE.logger.log(Level.WARNING, "Couldn't back up entities.json", e)
+            }
+        }
 
         writer = Executors.newSingleThreadExecutor { Thread(it, "BiteDisplays Save").apply { isDaemon = true } }
     }
@@ -63,6 +89,10 @@ object EntityDatabase {
 
     /** Saves off the main thread. The future completes on the save thread. */
     fun saveAsync(): CompletableFuture<Int> {
+        if (!loaded) {
+            INSTANCE.logger.severe(NOT_LOADED)
+            return CompletableFuture.failedFuture(IllegalStateException(NOT_LOADED))
+        }
         dirty = false
         val snapshot = snapshot()
         return CompletableFuture.supplyAsync({
@@ -78,6 +108,10 @@ object EntityDatabase {
 
     /** On shutdown: lets a save that's already running finish, then saves on this thread. */
     fun saveNow() {
+        if (!loaded) {
+            INSTANCE.logger.severe(NOT_LOADED)
+            return
+        }
         writer.shutdown()
         writer.awaitTermination(10, TimeUnit.SECONDS)
         dirty = false
@@ -90,7 +124,7 @@ object EntityDatabase {
         val interval = ConfigManager.settings.autosaveTicks
         if (interval <= 0) return
         autosave = INSTANCE.server.scheduler.runTaskTimer(INSTANCE, Runnable {
-            if (dirty) saveAsync()
+            if (dirty && loaded) saveAsync()
         }, interval, interval)
     }
 
@@ -99,7 +133,7 @@ object EntityDatabase {
         autosave = null
     }
 
-    private fun snapshot(): List<SerializedEntity> = EntityManager.getAll().mapNotNull { toSerialized(it) }
+    private fun snapshot(): List<SerializedEntity> = EntityManager.getAll().mapNotNull { toSerialized(it) } + held
 
     private fun write(json: String) {
         val temp = File(file.parentFile, "${file.name}.tmp")
@@ -111,21 +145,93 @@ object EntityDatabase {
         }
     }
 
+    /**
+     * Reads entities.json on startup. Entries in worlds that aren't loaded yet (worlds a plugin like Multiverse
+     * loads after us) are held until [onWorldLoad]. If the file can't be parsed, this throws and nothing is saved
+     * until the next startup, so the file stays as it is for the admin to fix.
+     */
     fun load() {
         val text = file.readText()
-        if (text.isBlank()) return
+        if (text.isBlank()) {
+            loaded = true
+            return
+        }
 
-        val type = object : TypeToken<List<SerializedEntity>>() {}.type
-        val list: List<SerializedEntity> = gson.fromJson(text, type) ?: return
+        val type = object : TypeToken<List<SerializedEntity?>>() {}.type
+        val list: List<SerializedEntity> = try {
+            gson.fromJson<List<SerializedEntity?>>(text, type)?.filterNotNull() ?: emptyList()
+        } catch (e: JsonParseException) {
+            throw IllegalStateException(
+                "Couldn't read entities.json, so BiteDisplays won't save over it. Fix the file (or restore " +
+                    "entities.json.bak), then restart the server.", e
+            )
+        }
 
         // Entities saved before IDs were numbered (number 0) get the next free number of their type
         val highest = list.groupBy { it.type }.mapValues { (_, entries) -> entries.maxOf { it.number } }.toMutableMap()
 
-        for (data in list) {
-            val number = data.number.takeIf { it > 0 }
-                ?: (highest.getValue(data.type) + 1).also { highest[data.type] = it }
-            val entity = fromSerialized(data, number) ?: continue
+        for (raw in list) {
+            val number = raw.number.takeIf { it > 0 }
+                ?: (highest.getValue(raw.type) + 1).also { highest[raw.type] = it }
+            val data = raw.copy(number = number)
+            if (data.world != null && Bukkit.getWorld(data.world) == null) {
+                held += data
+                continue
+            }
+            restoreOrHold(data)
+        }
+        loaded = true
+
+        held.filter { Bukkit.getWorld(it.world ?: return@filter false) == null }
+            .groupingBy { it.world }.eachCount()
+            .forEach { (world, count) ->
+                INSTANCE.logger.info("$count ${if (count == 1) "entity waits" else "entities wait"} for world '$world' to load.")
+            }
+    }
+
+    /** Restores the held entities in a world that just loaded. */
+    fun onWorldLoad(world: World) {
+        if (!loaded) return
+        val waiting = held.filter { it.world == world.name }
+        if (waiting.isEmpty()) return
+
+        held.removeAll(waiting)
+        val restored = waiting.count { restoreOrHold(it) }
+        INSTANCE.logger.info("Loaded $restored ${if (restored == 1) "entity" else "entities"} in ${world.name}.")
+    }
+
+    /**
+     * Holds the entities in a world that's about to unload. They're snapshot now, while their world can still
+     * be read, saved from [held], and come back with the world.
+     */
+    fun onWorldUnload(world: World) {
+        if (!loaded) return
+        for (entity in EntityManager.inWorld(world)) {
+            toSerialized(entity)?.let { held += it }
+            EntityManager.forget(entity.id)
+        }
+    }
+
+    /** The highest number held for [type], so new entities don't take the ID of one that comes back later. */
+    fun highestHeld(type: BiteType): Int = held.filter { it.type == type.key }.maxOfOrNull { it.number } ?: 0
+
+    /** Restores one entry, or holds it (with a warning) if it can't be. Returns whether it was restored. */
+    private fun restoreOrHold(data: SerializedEntity): Boolean {
+        try {
+            val entity = fromSerialized(data) ?: throw IllegalArgumentException("Unknown type '${data.type}'")
             EntityManager.restore(entity)
+            return true
+        } catch (e: Exception) {
+            // restore registers before it spawns, so an entity that failed to spawn is already kept
+            val registered = runCatching { EntityManager.get(UUID.fromString(data.id)) }.getOrNull() != null
+            if (!registered) held += data
+            INSTANCE.logger.log(
+                Level.WARNING,
+                "Couldn't load ${data.type}-${data.number} (${data.id}). " +
+                    if (registered) "It's kept, and spawns when its chunk loads again." else "It stays in entities.json.",
+                e
+            )
+            return registered
         }
     }
 
@@ -137,7 +243,10 @@ object EntityDatabase {
             type = entity.type.key,
             id = entity.id.toString(),
             number = entity.number,
-            world = loc.world?.name ?: return null,
+            world = worldName(loc) ?: run {
+                INSTANCE.logger.severe("${entity.displayId} has no loaded world, so it couldn't be saved.")
+                return null
+            },
             x = loc.x, y = loc.y, z = loc.z,
             yaw = loc.yaw, pitch = loc.pitch
         )
@@ -192,10 +301,15 @@ object EntityDatabase {
         }
     }
 
-    private fun fromSerialized(data: SerializedEntity, number: Int): BiteEntity? {
-        val world = Bukkit.getWorld(data.world) ?: return null
+    /**
+     * The entity an entry describes, or null for an unknown type. Throws if it can't be built (no world loaded,
+     * no ID, an item that won't decode), so the caller holds the entry rather than dropping it.
+     */
+    private fun fromSerialized(data: SerializedEntity): BiteEntity? {
+        val world = data.world?.let { Bukkit.getWorld(it) } ?: throw IllegalStateException("World '${data.world}' isn't loaded")
         val location = Location(world, data.x, data.y, data.z, data.yaw, data.pitch)
-        val id = UUID.fromString(data.id)
+        val id = UUID.fromString(data.id ?: throw IllegalArgumentException("No id"))
+        val number = data.number
 
         // Commands saved before they had a runner were run by the console
         val runner = CommandRunner.fromKey(data.commandRunner) ?: CommandRunner.CONSOLE
@@ -229,7 +343,7 @@ object EntityDatabase {
                 id = id,
                 number = number,
                 location = location,
-                itemStack = data.itemStack?.let { decodeItem(it) } ?: return null,
+                itemStack = decodeItem(data.itemStack ?: throw IllegalArgumentException("No block")),
                 scale = Vector3f(data.scaleX, data.scaleY, data.scaleZ),
                 yaw = data.rotationYaw,
                 pitch = data.rotationPitch,
@@ -241,7 +355,7 @@ object EntityDatabase {
                 id = id,
                 number = number,
                 location = location,
-                itemStack = data.itemStack?.let { decodeItem(it) } ?: return null,
+                itemStack = decodeItem(data.itemStack ?: throw IllegalArgumentException("No item")),
                 scale = Vector3f(data.scaleX, data.scaleY, data.scaleZ),
                 yaw = data.rotationYaw,
                 pitch = data.rotationPitch,
@@ -273,28 +387,39 @@ object EntityDatabase {
         return Base64.getEncoder().encodeToString(stream.toByteArray())
     }
 
-    private fun decodeItem(data: String): ItemStack? {
-        return try {
+    /** Throws if the item can't be read (from a newer server, or a plugin's item type), so the entry is held. */
+    private fun decodeItem(data: String): ItemStack {
+        try {
             val bytes = Base64.getDecoder().decode(data)
-            BukkitObjectInputStream(ByteArrayInputStream(bytes)).use {
+            return BukkitObjectInputStream(ByteArrayInputStream(bytes)).use {
                 it.readObject() as ItemStack
             }
         } catch (e: Exception) {
-            null
+            throw IllegalArgumentException("Couldn't read a saved item", e)
         }
     }
+
+    /** The location's world name, or null if it has none or it unloaded (Location throws for those). */
+    private fun worldName(location: Location): String? = try {
+        location.world?.name
+    } catch (_: IllegalArgumentException) {
+        null
+    }
+
+    private const val NOT_LOADED = "entities.json wasn't read at startup, so it isn't saved over. See the error above."
 }
 
 /**
  * Flat DTO that unions all fields across entity types.
  * The [type] discriminator determines which fields are relevant.
+ * Gson skips the constructor, so [type], [id] and [world] can still be null in a hand-edited file.
  */
 private data class SerializedEntity(
-    val type: String,
-    val id: String,
+    val type: String?,
+    val id: String?,
     /** The number in the ID players see (npc-1). 0 in files saved before IDs were numbered. */
     val number: Int = 0,
-    val world: String,
+    val world: String?,
     val x: Double,
     val y: Double,
     val z: Double,
