@@ -449,7 +449,7 @@ object EntityManager {
     fun setNpcOverride(owner: String, displayId: String, name: String?, description: String?, skin: Skin?): Boolean {
         val npc = findByDisplayId(displayId) as? BiteNpc ?: return false
         if (name == null && description == null && skin == null) {
-            dropOverride(npc.id, null)
+            dropOverride(npc.id, owner)
             return true
         }
 
