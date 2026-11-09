@@ -3,6 +3,7 @@ package gg.bitesize.displays
 import gg.bitesize.displays.listeners.EntityInteractListener
 import gg.bitesize.displays.listeners.GuiListener
 import gg.bitesize.displays.listeners.PlayerListener
+import gg.bitesize.displays.listeners.PluginListener
 import gg.bitesize.displays.listeners.ProtectionListener
 import gg.bitesize.displays.listeners.WorldListener
 import gg.bitesize.displays.managers.AnimationManager
@@ -41,6 +42,7 @@ class BiteDisplays : JavaPlugin() {
         server.pluginManager.registerEvents(WorldListener, this)
         server.pluginManager.registerEvents(GuiListener, this)
         server.pluginManager.registerEvents(PlayerListener, this)
+        server.pluginManager.registerEvents(PluginListener, this)
         server.pluginManager.registerEvents(ProtectionListener, this)
         server.messenger.registerOutgoingPluginChannel(this, EntityInteractListener.PROXY_CHANNEL)
 

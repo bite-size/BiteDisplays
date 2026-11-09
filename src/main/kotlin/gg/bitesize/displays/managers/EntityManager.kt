@@ -53,6 +53,13 @@ object EntityManager {
     /** Bounds that hold each display from any side ([boundsOf] without a viewer), until it changes. */
     private val boundsCache = HashMap<UUID, BoundingBox>()
 
+    /**
+     * What another plugin shows on an NPC instead of its saved name, description or skin (a null part keeps
+     * the saved one). Kept by NPC, never saved: [applyNpc] layers it over the stored fields.
+     */
+    private data class NpcOverride(val owner: String, val name: String?, val description: String?, val skin: Skin?)
+    private val overrides = ConcurrentHashMap<UUID, NpcOverride>()
+
     private val platform get() = Platform.current
 
     // Text displays render 40 pixels to a block. A default-font character is about 6 pixels wide and a line 10 tall.
@@ -158,6 +165,7 @@ object EntityManager {
         val entity = entities.remove(id) ?: return false
         unindex(id, entity.location)
         boundsCache.remove(id)
+        overrides.remove(id)
         AnimationManager.forget(id)
         EntityDatabase.markDirty()
         despawnCompanions(id)
@@ -181,6 +189,7 @@ object EntityManager {
         val entity = entities.remove(id) ?: return
         unindex(id, entity.location)
         boundsCache.remove(id)
+        overrides.remove(id)
         AnimationManager.forget(id)
         cleanupGlowTeam(id)
         selections.entries.removeIf { it.value == id }
@@ -261,6 +270,7 @@ object EntityManager {
         selections.clear()
         chunkIndex.clear()
         boundsCache.clear()
+        overrides.clear()
         AnimationManager.clear()
     }
 
@@ -361,12 +371,15 @@ object EntityManager {
     // ── Apply helpers (shared by spawn and update) ─────────────────
 
     private fun applyNpc(npc: BiteNpc, mannequin: Mannequin) {
-        platform.setName(mannequin, npc.name?.let(::styled))
-        mannequin.isCustomNameVisible = npc.name != null
+        // Another plugin's override is shown over the saved name, description and skin, which stay as they are
+        val shown = overrides[npc.id]
+        val name = shown?.name ?: npc.name
+        platform.setName(mannequin, name?.let(::styled))
+        mannequin.isCustomNameVisible = name != null
 
-        platform.setDescription(mannequin, npc.description?.let(::styled))
+        platform.setDescription(mannequin, (shown?.description ?: npc.description)?.let(::styled))
 
-        npc.skin()?.let { platform.setSkin(mannequin, it) }
+        (shown?.skin ?: npc.skin())?.let { platform.setSkin(mannequin, it) }
 
         mannequin.getAttribute(Attribute.SCALE)?.baseValue = npc.scale
 
@@ -425,6 +438,60 @@ object EntityManager {
 
     /** Platform renders MiniMessage, and players may also type legacy codes. */
     private fun styled(text: String): String = FormatManager.legacyToMiniMessage(text)
+
+    // ── Runtime NPC overrides (BiteDisplaysApi.setNpcOverride) ─────
+
+    /**
+     * Shows [name], [description] and [skin] on an NPC for [owner] (null parts keep what's saved), without touching
+     * what's saved: nothing is marked dirty and no change event fires. A second owner replaces the first.
+     * False if [displayId] isn't an NPC. An override with every part null is a clear.
+     */
+    fun setNpcOverride(owner: String, displayId: String, name: String?, description: String?, skin: Skin?): Boolean {
+        val npc = findByDisplayId(displayId) as? BiteNpc ?: return false
+        if (name == null && description == null && skin == null) {
+            dropOverride(npc.id, null)
+            return true
+        }
+
+        val next = NpcOverride(owner, name, description, skin)
+        val previous = overrides.put(npc.id, next)
+        if (previous == next) return true
+        showOverride(npc, resetSkin = previous?.skin != null && skin == null)
+        return true
+    }
+
+    /** Takes [owner]'s override off an NPC and shows the saved look again. False if it had none of theirs. */
+    fun clearNpcOverride(owner: String, displayId: String): Boolean {
+        val npc = findByDisplayId(displayId) as? BiteNpc ?: return false
+        return dropOverride(npc.id, owner)
+    }
+
+    /** Clears every override [owner] set, for when that plugin disables. */
+    fun clearNpcOverridesOf(owner: String) {
+        overrides.entries.filter { it.value.owner == owner }.forEach { dropOverride(it.key, owner) }
+    }
+
+    private fun dropOverride(id: UUID, owner: String?): Boolean {
+        val current = overrides[id] ?: return false
+        if (owner != null && current.owner != owner) return false
+        overrides.remove(id)
+        (entities[id] as? BiteNpc)?.let { showOverride(it, resetSkin = current.skin != null) }
+        return true
+    }
+
+    /**
+     * Applies the current override state to a spawned NPC. A skin can't be taken off a mannequin (a saved NPC
+     * without one has none to go back to), so when an overridden skin goes away the mannequin is spawned again.
+     */
+    private fun showOverride(npc: BiteNpc, resetSkin: Boolean) {
+        val mannequin = bukkitEntities[npc.id] as? Mannequin ?: return
+        if (resetSkin) {
+            unloadBukkitEntity(npc.id)
+            respawn(npc)
+        } else {
+            applyNpc(npc, mannequin)
+        }
+    }
 
     // ── Companion entity helpers ───────────────────────────────────
 

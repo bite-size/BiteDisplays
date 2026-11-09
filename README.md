@@ -236,6 +236,8 @@ fun onClick(event: BiteEntityClickEvent) {
 }
 ```
 
+**Changing an NPC's look at runtime (1.2.0).** `BiteDisplaysApi.setNpcOverride(plugin, "npc-3", name, description, skinValue, skinSignature)` shows another name, description and/or skin on an NPC without touching what's saved. A `null` part keeps the saved one. Text is MiniMessage or legacy codes like a stored name, and the skin is a signed `textures` property (the value and signature of a Mojang profile). Nothing is written to `entities.json` and no change event fires, so calling it every few minutes costs nothing. The override survives chunk unloads and `/bd reload`, and `/bd name`, `/bd skin` and the other edits change what's saved and show once it's cleared. It lasts until `clearNpcOverride(plugin, "npc-3")`, the NPC is removed, the server stops, or your plugin disables (cleared for you). One override per NPC: another plugin's replaces yours. Both calls return `false` when the ID isn't an NPC (or, for `clearNpcOverride`, when your plugin has no override on it). Clearing an overridden skin spawns the NPC again. Check `BiteDisplaysApi::class.java.getMethod("setNpcOverride", ...)` if you also support 1.1.x.
+
 ## Compatibility
 
 | | |

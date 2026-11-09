@@ -2,7 +2,7 @@
 #####    Created by: bitesize    ####
 #####   https://www.bitesize.gg  ####
 #####################################
-version: 1.1.1
+version: 1.2.0
 
 # Turn the commands for each entity type on or off. Entities already placed stay in the world.
 features:

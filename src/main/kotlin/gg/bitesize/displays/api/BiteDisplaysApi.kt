@@ -3,8 +3,10 @@ package gg.bitesize.displays.api
 import gg.bitesize.displays.BiteDisplays
 import gg.bitesize.displays.managers.EntityManager
 import org.bukkit.NamespacedKey
+import gg.bitesize.displays.platform.Skin
 import org.bukkit.entity.Entity
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.plugin.Plugin
 import org.bukkit.util.BoundingBox
 
 /**
@@ -50,6 +52,42 @@ object BiteDisplaysApi {
         val entity = EntityManager.findByDisplayId(displayId) ?: return null
         return EntityManager.boundsOf(entity)?.clone()
     }
+
+    /**
+     * Shows another name, description and/or skin on an NPC without changing what's saved: nothing is written to
+     * entities.json and no [BiteEntityChangeEvent] fires. A null part keeps what's saved (a description can be replaced, not hidden).
+     * Text is MiniMessage or legacy codes, like a stored name. The skin is a signed `textures` property
+     * ([skinValue] and [skinSignature], as in the Mojang profile); a [skinValue] without a signature is applied unsigned.
+     *
+     * The override survives chunk unloads, `/bd reload` and respawns, and lasts until it is cleared, the NPC is
+     * removed, the server stops, or [plugin] disables. `/bd` edits to the NPC change what's saved and show once the
+     * override is cleared. One override per NPC: setting one replaces any other plugin's. Passing no name, description
+     * or skin is the same as [clearNpcOverride] (and still returns true for an NPC).
+     *
+     * @return false if [displayId] isn't an NPC, true otherwise (also while its chunk isn't loaded).
+     */
+    @JvmStatic
+    fun setNpcOverride(
+        plugin: Plugin,
+        displayId: String,
+        name: String?,
+        description: String?,
+        skinValue: String?,
+        skinSignature: String?,
+    ): Boolean {
+        val skin = skinValue?.let { Skin(it, skinSignature) }
+        return EntityManager.setNpcOverride(plugin.name, displayId, name, description, skin)
+    }
+
+    /**
+     * Removes [plugin]'s override and shows the saved name, description and skin again (a saved NPC without a skin
+     * goes back to none; the NPC is spawned again for that).
+     *
+     * @return false if the NPC doesn't exist or has no override of this plugin's.
+     */
+    @JvmStatic
+    fun clearNpcOverride(plugin: Plugin, displayId: String): Boolean =
+        EntityManager.clearNpcOverride(plugin.name, displayId)
 
     internal fun tag(entity: Entity, displayId: String) {
         entity.persistentDataContainer.set(ID_KEY, PersistentDataType.STRING, displayId)
